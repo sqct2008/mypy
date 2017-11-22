@@ -1,0 +1,36 @@
+Name: Jingbei Liu
+
+Clemson Email Address: ljingbe@clemson.edu
+
+Project no: 4
+
+Project due date: Nov 13th 2017
+
+Project description: Use scanner and parser to build Abstract Syntax Tree. The program should handle basic python datatype functions.
+
+The easiest part of this project: All the basic requirement in this project.
+
+Problems that I had in completing this project:
+
+I did the best of myself in this project, and really learnt a lot.
+
+Except all the basic requirement in this project, I also finished:
+
+1. Do TILDE, using a trick, which uses "-1 - INT".
+
+2. Do LEFTSHIFT/RIGHTSHIFT, which also using a trick to do.
+
+3. Do STRING, I rewrote the Literal.h, and several classes and make STRING work the right way.
+  1) String can be print properly.
+  2) String will do ADD properly.
+  3) String will do MULT properly.
+  *) I did not implement multiassign with String, which will not do "x,y,z='abc'".
+      See in the cases.
+
+4. Do Tuples, list, set, I add a new class ContainerLiteral to Literal, and make it work properly.
+  1) Tuples, list will be print properly. However, set is not stored as ordered, the order of elements in set may not printed the same.
+  2) Tuples, list will do Add properly. Set does not have add operation.
+  3) Tuples, list will do Mult properly. Set won't do it neither.
+  4) tuples, list, set will do multiassign properly.
+
+This project give me a better understand of the polymorphism and Virtual Function, Virtual base class, Abstract class etc.
