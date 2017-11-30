@@ -31,6 +31,29 @@ private:
   std::string ident;
 };
 
+class FuncNode : public Node {
+public:
+  FuncNode(const std::string id) : Node(), ident(id) { } 
+  virtual ~FuncNode() {}
+  const std::string getIdent() const { return ident; }
+  virtual const Literal* eval() const;
+private:
+  std::string ident;
+  std::vector<std::string> parameters;
+
+};
+
+class SuiteNode : public Node {
+public:
+  SuiteNode(Node* _root) : Node(), scale("global"), root(_root) { } 
+  // FIXME: Is it better to do deconstruction here?
+  virtual ~SuiteNode() {}
+  virtual const Literal* eval() const;
+private:
+  std::string scale;
+  TuplesLiteral* root;
+};
+
 class BinaryNode : public Node {
 public:
   BinaryNode(Node* l, Node* r) : Node(), left(l), right(r) {}

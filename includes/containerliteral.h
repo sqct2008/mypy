@@ -105,26 +105,44 @@ public:
     else
       throw "out of range!"; 
   }
+
   Node* getItem(int _begin, int _end) {
     int _size = tuples.size();
     if(_begin < 0)
       _begin += _size;
     if(_end < 0)
       _end += _size;
-    if(_begin < _end && index >= -_size) {
-      if(index < 0)
-        index += _size;
-      std::list<Node*>::iterator it = tuples.begin();
-      std::advance(it, index);
-      return *it;
+    if(_end < _size && _begin >= 0 && _begin <= _end) {
+      if(_end - _begin == 1) {
+        std::list<Node*>::iterator it = tuples.begin();
+        std::advance(it, _begin);
+        return *it;
+      } else if(_begin == _end) {
+        TuplesLiteral* nullTuple = new TuplesLiteral;
+        PoolOfNodes::getInstance().add(nullTuple);
+        return nullTuple;
+      } else {
+        std::list<Node*> new_list;
+        std::list<Node*> copy_tuple = tuples;
+        std::list<Node*>::iterator begin_it = tuples.begin();
+        std::list<Node*>::iterator end_it = tuples.begin();
+        std::advance(begin_it, _begin);
+        std::advance(end_it, _end);
+        new_list.splice( new_list.begin(), copy_tuple, begin_it, end_it );
+        TuplesLiteral* node = new TuplesLiteral(new_list);
+        node->setType(_type);
+        PoolOfNodes::getInstance().add(node);
+        return node;
+      }
     }
     else
       throw "out of range!"; 
-
   }
+
   const std::list<Node*>& getVec() {
     return tuples;
   }
+
   TuplesLiteral(const std::list<Node*>& vec) {
     tuples = vec;
   }

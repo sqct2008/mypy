@@ -25,7 +25,8 @@
 %start start
 
 %type<node> atom plus_STRING power factor term arith_expr shift_expr opt_yield_test pick_yield_expr_testlist_comp testlist_comp pick_yield_expr_testlist testlist star_EQUAL expr_stmt test 
-%type<node> or_test and_test not_test comparison expr xor_expr and_expr testlist1 star_COMMA_test listmaker opt_listmaker dictorsetmaker opt_dictorsetmaker pick_for_test 
+%type<node> or_test and_test not_test comparison expr xor_expr and_expr testlist1 star_COMMA_test listmaker opt_listmaker dictorsetmaker opt_dictorsetmaker pick_for_test argument pick_argument
+%type<node> opt_arglist arglist trailer star_argument_COMMA parameters
 %type<id> NAME STRING
 %type<integer> INT 
 %type<floatnumber> FLOAT
@@ -61,7 +62,9 @@ decorator // Used in: decorators
 	;
 opt_arglist // Used in: decorator, trailer
 	: arglist
+    { $$ = $1; }
 	| %empty
+    { $$ = nullptr; }
 	;
 decorators // Used in: decorators, decorated
 	: decorators decorator
@@ -79,7 +82,9 @@ funcdef // Used in: decorated, compound_stmt
 	;
 parameters // Used in: funcdef
 	: LPAR varargslist RPAR
+    { $$ = $2; }
 	| LPAR RPAR
+    { $$ = new TuplesLiteral; pool.add($$); }
 	;
 varargslist // Used in: parameters, old_lambdef, lambdef
 	: star_fpdef_COMMA pick_STAR_DOUBLESTAR
@@ -123,7 +128,9 @@ stmt // Used in: pick_NEWLINE_stmt, plus_stmt
 	;
 simple_stmt // Used in: stmt, suite
 	: small_stmt star_SEMI_small_stmt SEMI NEWLINE
+    { $$ = $1; }
 	| small_stmt star_SEMI_small_stmt NEWLINE
+    { $$ = $1; }
 	;
 star_SEMI_small_stmt // Used in: simple_stmt, star_SEMI_small_stmt
 	: star_SEMI_small_stmt SEMI small_stmt
@@ -140,6 +147,7 @@ small_stmt // Used in: simple_stmt, star_SEMI_small_stmt
       }
       else 
         $1 -> eval(); 
+      $$ = $1;
     }
 	| print_stmt
 	| del_stmt
@@ -741,6 +749,7 @@ power // Used in: factor
 star_trailer // Used in: power, star_trailer
 	: star_trailer trailer
 	| %empty
+    { $$ = nullptr; }
 	;
 atom // Used in: power
 	: LPAR opt_yield_test RPAR
@@ -892,8 +901,11 @@ lambdef // Used in: test
 	;
 trailer // Used in: star_trailer
 	: LPAR opt_arglist RPAR
+    { $2->setType(tuple); $$ = $2; }
 	| LSQB subscriptlist RSQB
+    { $$ = nullptr; }
 	| DOT NAME
+    { $$ = nullptr; }
 	;
 subscriptlist // Used in: trailer
 	: subscript star_COMMA_subscript COMMA
@@ -1009,10 +1021,44 @@ opt_testlist // Used in: classdef
 	;
 arglist // Used in: opt_arglist
 	: star_argument_COMMA pick_argument
+		{
+      TuplesLiteral* tuples = dynamic_cast<TuplesLiteral*>($1);
+      if(tuples) {
+        IdentNode* idNode = dynamic_cast<IdentNode*>($1);
+        if(idNode)
+          tuples -> add_back(idNode);
+        else
+          tuples -> add_back(const_cast<Literal*>($1->eval()));
+        $$ = tuples;
+      }
+      else {
+        $$ = $2;
+      }
+    }
 	;
 star_argument_COMMA // Used in: arglist, star_argument_COMMA
 	: star_argument_COMMA argument COMMA
+    {
+      TuplesLiteral* tuples = dynamic_cast<TuplesLiteral*>($1);
+      IdentNode* idNode = dynamic_cast<IdentNode*>($2);
+      if(tuples) {
+        if(idNode) 
+          tuples -> add_back(idNode);
+        else
+          tuples -> add_back(const_cast<Literal*>($2->eval()));
+        $$ = tuples;
+      }
+      else {
+        if(idNode)
+          tuples = new TuplesLiteral(idNode);
+        else
+          tuples = new TuplesLiteral(const_cast<Literal*>($2->eval()));
+        $$ = tuples;
+        pool.add($$);
+      }
+    }
 	| %empty
+    { $$ = nullptr; }
 	;
 star_COMMA_argument // Used in: star_COMMA_argument, pick_argument
 	: star_COMMA_argument COMMA argument
@@ -1024,12 +1070,17 @@ opt_DOUBLESTAR_test // Used in: pick_argument
 	;
 pick_argument // Used in: arglist
 	: argument opt_COMMA
+    { $$ = $1; }
 	| STAR test star_COMMA_argument opt_DOUBLESTAR_test
+    { $$ = nullptr; }
 	| DOUBLESTAR test
+    { $$ = nullptr; }
 	;
 argument // Used in: star_argument_COMMA, star_COMMA_argument, pick_argument
 	: test opt_comp_for
+    { $$ = $1; }
 	| test EQUAL test
+    { $$ = nullptr; }
 	;
 opt_comp_for // Used in: argument
 	: comp_for
