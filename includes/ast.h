@@ -21,6 +21,7 @@ class Literal;
 
 void freeAST(Node*);
 
+
 class IdentNode : public Node {
 public:
   IdentNode(const std::string id) : Node(), ident(id) { } 
@@ -31,27 +32,40 @@ private:
   std::string ident;
 };
 
+class SuiteNode;
+
 class FuncNode : public Node {
 public:
-  FuncNode(const std::string id) : Node(), ident(id) { } 
+  FuncNode(SuiteNode* _suiteNode, TuplesLiteral* parameters) : Node(), suiteNode(_suiteNode) {
+    std::list<Node*> paras = parameters->getVec();
+    std::list<Node*>::iterator it = paras.begin();
+    while(it != paras.end()) {
+      IdentNode* ident = dynamic_cast<IdentNode*>(*it);
+      ident->getIdent();
+      new NoneTypeLiteral();
+      ++it;
+    }
+
+
+
+  } 
   virtual ~FuncNode() {}
-  const std::string getIdent() const { return ident; }
   virtual const Literal* eval() const;
 private:
-  std::string ident;
-  std::vector<std::string> parameters;
-
+  Node* parent = nullptr;
+  Node* son = nullptr;
+  std::vector<std::string> symboltable;
+  SuiteNode* suiteNode;
 };
 
 class SuiteNode : public Node {
 public:
-  SuiteNode(Node* _root) : Node(), scale("global"), root(_root) { } 
+  SuiteNode(TuplesLiteral* _lines) : Node(), suite(_lines) { } 
   // FIXME: Is it better to do deconstruction here?
   virtual ~SuiteNode() {}
   virtual const Literal* eval() const;
 private:
-  std::string scale;
-  TuplesLiteral* root;
+  TuplesLiteral* suite;
 };
 
 class BinaryNode : public Node {

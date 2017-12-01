@@ -139,6 +139,15 @@ public:
       throw "out of range!"; 
   }
 
+  // execute the suite
+  void execution() {
+    std::list<Node*>::iterator it = tuples.begin();
+    while(it != tuples.end()) {
+      (*it)->eval();
+      ++it;
+    }
+  }
+
   const std::list<Node*>& getVec() {
     return tuples;
   }

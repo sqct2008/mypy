@@ -26,7 +26,7 @@
 
 %type<node> atom plus_STRING power factor term arith_expr shift_expr opt_yield_test pick_yield_expr_testlist_comp testlist_comp pick_yield_expr_testlist testlist star_EQUAL expr_stmt test 
 %type<node> or_test and_test not_test comparison expr xor_expr and_expr testlist1 star_COMMA_test listmaker opt_listmaker dictorsetmaker opt_dictorsetmaker pick_for_test argument pick_argument
-%type<node> opt_arglist arglist trailer star_argument_COMMA parameters
+%type<node> opt_arglist arglist trailer star_argument_COMMA parameters varargslist small_stmt simple_stmt star_trailer 
 %type<id> NAME STRING
 %type<integer> INT 
 %type<floatnumber> FLOAT
@@ -901,7 +901,10 @@ lambdef // Used in: test
 	;
 trailer // Used in: star_trailer
 	: LPAR opt_arglist RPAR
-    { $2->setType(tuple); $$ = $2; }
+    { //FIXIT: type 
+      //$2->setType(tuple); 
+      $$ = $2; 
+    }
 	| LSQB subscriptlist RSQB
     { $$ = nullptr; }
 	| DOT NAME

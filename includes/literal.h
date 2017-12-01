@@ -3,6 +3,7 @@
 #include "node.h"
 #include "poolOfNodes.h"
 class ContainerLiteral; 
+class NoneTypeLiteral;
 class Literal : public Node {
 public:
   virtual ~Literal() {}
@@ -10,41 +11,169 @@ public:
   virtual const Literal* operator+(const Literal& rhs) const =0;
   virtual const Literal* opPlus(long double) const =0;
   virtual const Literal* opPlus(int) const =0;
+  virtual const Literal* opPlus(const NoneTypeLiteral*) const =0;
   virtual const Literal* opPlus(const ContainerLiteral*) const =0;
 
   virtual const Literal* operator*(const Literal& rhs) const =0;
   virtual const Literal* opMult(long double) const =0;
   virtual const Literal* opMult(int) const =0;
+  virtual const Literal* opMult(const NoneTypeLiteral*) const =0;
   virtual const Literal* opMult(const ContainerLiteral*) const =0;
 
   virtual const Literal* operator-(const Literal& rhs) const =0;
   virtual const Literal* opSubt(long double) const =0;
   virtual const Literal* opSubt(int) const =0;
+  virtual const Literal* opSubt(const NoneTypeLiteral*) const =0;
   virtual const Literal* opSubt(const ContainerLiteral*) const =0;
 
   virtual const Literal* operator/(const Literal& rhs) const =0;
   virtual const Literal* opDiv(long double) const =0;
   virtual const Literal* opDiv(int) const =0;
+  virtual const Literal* opDiv(const NoneTypeLiteral*) const =0;
   virtual const Literal* opDiv(const ContainerLiteral*) const =0;
 
   virtual const Literal* opPower(const Literal& rhs) const =0;
   virtual const Literal* opPower(long double) const =0;
   virtual const Literal* opPower(int) const =0;
+  virtual const Literal* opPower(const NoneTypeLiteral*) const =0;
   virtual const Literal* opPower(const ContainerLiteral*) const =0;
 
   virtual const Literal* operator%(const Literal& rhs) const =0;
   virtual const Literal* opMod(long double) const =0;
   virtual const Literal* opMod(int) const =0;
+  virtual const Literal* opMod(const NoneTypeLiteral*) const =0;
   virtual const Literal* opMod(const ContainerLiteral*) const =0;
 
   virtual const Literal* doubleSlash(const Literal& rhs) const = 0;
   virtual const Literal* doubleSlash(long double) const =0;
   virtual const Literal* doubleSlash(int) const =0;
+  virtual const Literal* doubleSlash(const NoneTypeLiteral*) const =0;
   virtual const Literal* doubleSlash(const ContainerLiteral*) const =0;
 
   virtual const Literal* eval() const = 0;
   virtual void print() const { 
     std::cout << "No Way" << std::endl; 
+  }
+};
+
+class NoneTypeLiteral : public Literal {
+public:
+  virtual ~NoneTypeLiteral() {}
+  virtual const Literal* operator+(const Literal& rhs) const {
+    return rhs.opPlus(this);
+  }
+  virtual const Literal* opPlus(long double ) const {
+    throw "cannot add \'NoneType\' with \'Float\'!";
+  }
+  virtual const Literal* opPlus(int ) const {
+    throw "cannot add \'NoneType\' with \'int\'!";
+  }
+  virtual const Literal* opPlus(const NoneTypeLiteral*) const {
+    throw "cannot add \'NoneType\' with \'NoneType\'!";
+  }
+  virtual const Literal* opPlus(const ContainerLiteral*) const {
+    throw "cannot add \'NoneType\' with \'Container\'!";
+  }
+
+  virtual const Literal* operator-(const Literal& rhs) const {
+    return rhs.opSubt(this);
+  }
+  virtual const Literal* opSubt(long double ) const {
+    throw "cannot Subt \'NoneType\' with \'Float\'!";
+  }
+  virtual const Literal* opSubt(int ) const {
+    throw "cannot Subt \'NoneType\' with \'int\'!";
+  }
+  virtual const Literal* opSubt(const NoneTypeLiteral*) const {
+    throw "cannot Subt \'NoneType\' with \'NoneType\'!";
+  }
+  virtual const Literal* opSubt(const ContainerLiteral*) const {
+    throw "cannot Subt \'NoneType\' with \'Container\'!";
+  }
+
+  virtual const Literal* operator*(const Literal& rhs) const {
+    return rhs.opMult(this);
+  }
+  virtual const Literal* opMult(long double ) const {
+    throw "cannot Mult \'NoneType\' with \'Float\'!";
+  }
+  virtual const Literal* opMult(int ) const {
+    throw "cannot Mult \'NoneType\' with \'int\'!";
+  }
+  virtual const Literal* opMult(const NoneTypeLiteral*) const {
+    throw "cannot Mult \'NoneType\' with \'NoneType\'!";
+  }
+  virtual const Literal* opMult(const ContainerLiteral*) const {
+    throw "cannot Mult \'NoneType\' with \'Container\'!";
+  }
+
+  virtual const Literal* operator/(const Literal& rhs) const {
+    return rhs.opDiv(this);
+  }
+  virtual const Literal* opDiv(long double ) const {
+    throw "cannot Div \'NoneType\' with \'Float\'!";
+  }
+  virtual const Literal* opDiv(int ) const {
+    throw "cannot Div \'NoneType\' with \'int\'!";
+  }
+  virtual const Literal* opDiv(const NoneTypeLiteral*) const {
+    throw "cannot Div \'NoneType\' with \'NoneType\'!";
+  }
+  virtual const Literal* opDiv(const ContainerLiteral*) const {
+    throw "cannot Div \'NoneType\' with \'Container\'!";
+  }
+ 
+  virtual const Literal* opPower(const Literal& rhs) const {
+    return rhs.opPower(this);
+  }
+  virtual const Literal* opPower(long double ) const {
+    throw "cannot Power \'NoneType\' with \'Float\'!";
+  }
+  virtual const Literal* opPower(int ) const {
+    throw "cannot Power \'NoneType\' with \'int\'!";
+  }
+  virtual const Literal* opPower(const NoneTypeLiteral*) const {
+    throw "cannot Power \'NoneType\' with \'NoneType\'!";
+  }
+  virtual const Literal* opPower(const ContainerLiteral*) const {
+    throw "cannot Power \'NoneType\' with \'Container\'!";
+  }
+
+  virtual const Literal* operator%(const Literal& rhs) const {
+    return rhs.opMod(this);
+  }
+  virtual const Literal* opMod(long double ) const {
+    throw "cannot Mod \'NoneType\' with \'Float\'!";
+  }
+  virtual const Literal* opMod(int ) const {
+    throw "cannot Mod \'NoneType\' with \'int\'!";
+  }
+  virtual const Literal* opMod(const NoneTypeLiteral*) const {
+    throw "cannot Mod \'NoneType\' with \'NoneType\'!";
+  }
+  virtual const Literal* opMod(const ContainerLiteral*) const {
+    throw "cannot Mod \'NoneType\' with \'Container\'!";
+  }
+
+  virtual const Literal* doubleSlash(const Literal& rhs) const {
+    return rhs.doubleSlash(this);
+  } 
+  virtual const Literal* doubleSlash(long double ) const {
+    throw "cannot doubleSlash \'NoneType\' with \'Float\'!";
+  }
+  virtual const Literal* doubleSlash(int ) const {
+    throw "cannot doubleSlash \'NoneType\' with \'int\'!";
+  }
+  virtual const Literal* doubleSlash(const NoneTypeLiteral*) const {
+    throw "cannot doubleSlash \'NoneType\' with \'NoneType\'!";
+  }
+  virtual const Literal* doubleSlash(const ContainerLiteral*) const {
+    throw "cannot doubleSlash \'NoneType\' with \'Container\'!";
+  }
+
+  virtual const Literal* eval() const { return this; }
+  virtual void print() const { 
+    std::cout << "None"; 
   }
 };
 
@@ -60,6 +189,9 @@ public:
   virtual const Literal* opPlus(long double ) const {
     throw "cannot add \'Container\' with \'float\'!";
   }
+  virtual const Literal* opPlus(const NoneTypeLiteral*) const {
+    throw "cannot add \'Container\' with \'NoneType\'!";
+  }
   virtual const Literal* opPlus(const ContainerLiteral* ) const =0;
 
   virtual const Literal* operator-(const Literal& ) const =0;
@@ -69,14 +201,20 @@ public:
   virtual const Literal* opSubt(long double ) const {
     throw "cannot sub \'Container\' with \'float\'!";
   }
+  virtual const Literal* opSubt(const NoneTypeLiteral*) const {
+    throw "cannot sub \'Container\' with \'NoneType\'!";
+  }
   virtual const Literal* opSubt(const ContainerLiteral* ) const {
-     throw "cannot sub \'Container\' with \'Container\'!";
+    throw "cannot sub \'Container\' with \'Container\'!";
   }
 
   virtual const Literal* operator*(const Literal& ) const =0;
   virtual const Literal* opMult(int ) const =0;
   virtual const Literal* opMult(long double ) const {
     throw "cannot mult \'Container\' with \'float\'!";
+  }
+  virtual const Literal* opMult(const NoneTypeLiteral*) const {
+    throw "cannot Mult \'Container\' with \'NoneType\'!";
   }
   virtual const Literal* opMult(const ContainerLiteral* ) const {
     throw "cannot mult \'Container\' with \'Container\'!";
@@ -89,6 +227,9 @@ public:
   virtual const Literal* opDiv(long double ) const {
     throw "cannot div \'Container\' with \'float\'!";
   }
+  virtual const Literal* opDiv(const NoneTypeLiteral*) const {
+    throw "cannot div \'Container\' with \'NoneType\'!";
+  }
   virtual const Literal* opDiv(const ContainerLiteral* ) const {
     throw "cannot div \'Container\' with \'Container\'!";
   }
@@ -100,24 +241,25 @@ public:
   virtual const Literal* opPower(int ) const {
     throw "cannot power \'Container\' with \'int\'!";
   }
+  virtual const Literal* opPower(const NoneTypeLiteral*) const {
+    throw "cannot power \'Container\' with \'NoneType\'!";
+  }
   virtual const Literal* opPower(const ContainerLiteral* ) const {
     throw "cannot power \'Container\' with \'Container\'!";
   }
 
-  virtual const Literal* eval() const = 0; 
-  virtual void print() const { 
-    std::cout << "No way!" << std::endl;
-  }
-
   virtual const Literal* operator%(const Literal& ) const =0;
   virtual const Literal* opMod(int ) const {
-    throw "cannot div \'Container\' with \'int\'!";
+    throw "cannot Mod \'Container\' with \'int\'!";
   }
   virtual const Literal* opMod(long double ) const {
-    throw "cannot div \'Container\' with \'float\'!";
+    throw "cannot Mod \'Container\' with \'float\'!";
+  }
+  virtual const Literal* opMod(const NoneTypeLiteral*) const {
+    throw "cannot Mod \'Container\' with \'NoneType\'!";
   }
   virtual const Literal* opMod(const ContainerLiteral* ) const {
-    throw "cannot div \'Container\' with \'Container\'!";
+    throw "cannot Mod \'Container\' with \'Container\'!";
   }
   virtual const Literal* doubleSlash(const Literal& rhs) const = 0;
   virtual const Literal* doubleSlash(long double ) const {
@@ -126,8 +268,16 @@ public:
   virtual const Literal* doubleSlash(int ) const {
     throw "cannot doubleslash \'Container\' with \'int\'!";
   }
+  virtual const Literal* doubleSlash(const NoneTypeLiteral*) const {
+    throw "cannot doubleslash \'Container\' with \'NoneType\'!";
+  }
   virtual const Literal* doubleSlash(const ContainerLiteral*) const {
     throw "cannot doubleslash \'Container\' with \'container\'!";
+  }
+
+  virtual const Literal* eval() const = 0; 
+  virtual void print() const { 
+    std::cout << "No way!" << std::endl;
   }
 };
 
@@ -148,6 +298,9 @@ public:
     PoolOfNodes::getInstance().add(node);
     return node;
   }
+  virtual const Literal* opPlus(const NoneTypeLiteral*) const {
+    throw "cannot add \'Float\' with \'NoneType\'!";
+  }
   virtual const Literal* opPlus(const ContainerLiteral*) const {
     throw "cannot add \'Container\' with \'int\'!";
   }
@@ -164,6 +317,9 @@ public:
     const Literal* node = new FloatLiteral(lhs - val);
     PoolOfNodes::getInstance().add(node);
     return node;
+  }
+  virtual const Literal* opSubt(const NoneTypeLiteral*) const {
+    throw "cannot sub \'Float\' with \'NoneType\'!";
   }
   virtual const Literal* opSubt(const ContainerLiteral*) const {
     throw "cannot add \'Container\' with \'int\'!";
@@ -182,6 +338,9 @@ public:
     PoolOfNodes::getInstance().add(node);
     return node;
   }
+  virtual const Literal* opMult(const NoneTypeLiteral*) const {
+    throw "cannot Mult \'Float\' with \'NoneType\'!";
+  }
   virtual const Literal* opMult(const ContainerLiteral* lhs) const {
     return lhs->opMult(val);
   }
@@ -198,6 +357,9 @@ public:
     const Literal* node = new FloatLiteral(lhs / val);
     PoolOfNodes::getInstance().add(node);
     return node;
+  }
+  virtual const Literal* opDiv(const NoneTypeLiteral*) const {
+    throw "cannot div \'Float\' with \'NoneType\'!";
   }
   virtual const Literal* opDiv(const ContainerLiteral*) const {
     throw "cannot div \'Container\' with \'int\'!";
@@ -216,6 +378,9 @@ public:
     PoolOfNodes::getInstance().add(node);
     return node;
   }
+  virtual const Literal* opPower(const NoneTypeLiteral*) const {
+    throw "cannot power \'Float\' with \'NoneType\'!";
+  }
   virtual const Literal* opPower(const ContainerLiteral*) const {
     throw "cannot power \'Container\' with \'int\'!";
   }
@@ -233,6 +398,9 @@ public:
     PoolOfNodes::getInstance().add(node);
     return node;
   }
+  virtual const Literal* opMod(const NoneTypeLiteral*) const {
+    throw "cannot mod \'Float\' with \'NoneType\'!";
+  }
   virtual const Literal* opMod(const ContainerLiteral*) const {
     throw "cannot mod \'Container\' with \'float\'!";
   }
@@ -249,6 +417,9 @@ public:
     const Literal* node = new FloatLiteral(floor(lhs / val));
     PoolOfNodes::getInstance().add(node);
     return node;
+  }
+  virtual const Literal* doubleSlash(const NoneTypeLiteral*) const {
+    throw "cannot doubleslash \'Float\' with \'NoneType\'!";
   }
   virtual const Literal* doubleSlash(const ContainerLiteral*) const {
     throw "cannot doubleslash \'Container\' with \'float\'!";
@@ -281,8 +452,11 @@ public:
     PoolOfNodes::getInstance().add(node);
     return node;
   }
+  virtual const Literal* opPlus(const NoneTypeLiteral*) const {
+    throw "cannot add \'int\' with \'NoneType\'!";
+  }
   virtual const Literal* opPlus(const ContainerLiteral*) const {
-    throw "cannot add \'Container\' with \'int\'!";
+    throw "cannot add \'int\' with \'Container\'!";
   }
 
   virtual const Literal* operator-(const Literal& rhs) const {
@@ -298,8 +472,11 @@ public:
     PoolOfNodes::getInstance().add(node);
     return node;
   }
+  virtual const Literal* opSubt(const NoneTypeLiteral*) const {
+    throw "cannot sub \'int\' with \'NoneType\'!";
+  }
   virtual const Literal* opSubt(const ContainerLiteral*) const {
-    throw "cannot add \'Container\' with \'int\'!";
+    throw "cannot add \'int\' with \'Container\'!";
   }
 
   virtual const Literal* operator*(const Literal& rhs) const {
@@ -314,6 +491,9 @@ public:
     const Literal* node = new IntLiteral(lhs * val);
     PoolOfNodes::getInstance().add(node);
     return node;
+  }
+  virtual const Literal* opMult(const NoneTypeLiteral*) const {
+    throw "cannot Mult \'int\' with \'NoneType\'!";
   }
   virtual const Literal* opMult(const ContainerLiteral* lhs) const {
     return lhs->opMult(val);
@@ -332,8 +512,11 @@ public:
     PoolOfNodes::getInstance().add(node);
     return node;
   }
+  virtual const Literal* opDiv(const NoneTypeLiteral*) const {
+    throw "cannot div \'int\' with \'NoneType\'!";
+  }
   virtual const Literal* opDiv(const ContainerLiteral*) const {
-    throw "cannot add \'Container\' with \'int\'!";
+    throw "cannot div \'int\' with \'Container\'!";
   }
 
   virtual const Literal* opPower(const Literal& rhs) const {
@@ -349,8 +532,11 @@ public:
     PoolOfNodes::getInstance().add(node);
     return node;
   }
+  virtual const Literal* opPower(const NoneTypeLiteral*) const {
+    throw "cannot power \'int\' with \'NoneType\'!";
+  }
   virtual const Literal* opPower(const ContainerLiteral*) const {
-    throw "cannot add \'Container\' with \'int\'!";
+    throw "cannot add \'int\' with \'Container\'!";
   }
 
   virtual const Literal* operator%(const Literal& rhs) const {
@@ -366,8 +552,11 @@ public:
     PoolOfNodes::getInstance().add(node);
     return node;
   }
+  virtual const Literal* opMod(const NoneTypeLiteral*) const {
+    throw "cannot mod \'int\' with \'NoneType\'!";
+  }
   virtual const Literal* opMod(const ContainerLiteral*) const {
-    throw "cannot mod \'Container\' with \'int\'!";
+    throw "cannot mod \'int\' with \'Container\'!";
   }
   virtual const Literal* doubleSlash(const Literal& rhs) const {
     return rhs.doubleSlash(val);
@@ -382,8 +571,11 @@ public:
     PoolOfNodes::getInstance().add(node);
     return node;
   }
+  virtual const Literal* doubleSlash(const NoneTypeLiteral*) const {
+    throw "cannot doubleslash \'int\' with \'NoneType\'!";
+  }
   virtual const Literal* doubleSlash(const ContainerLiteral*) const {
-    throw "cannot doubleslash \'Container\' with \'float\'!";
+    throw "cannot doubleslash \'int\' with \'Container\'!";
   }
 
   virtual const Literal* eval() const { return this; }

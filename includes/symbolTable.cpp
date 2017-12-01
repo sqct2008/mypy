@@ -8,7 +8,12 @@ SymbolTable& SymbolTable::getInstance() {
 
 const Literal* SymbolTable::getValue(const std::string& name) const {
   std::map<std::string, const Literal*>::const_iterator it = table.find(name);
-  if ( it == table.end() ) throw name+std::string(" not found");
+  if ( it == table.end() ) {
+    NoneTypeLiteral* None = new NoneTypeLiteral;
+    PoolOfNodes::getInstance().add(None);
+    return None;
+    //throw name+std::string(" not found");
+  }
   return it->second;
 }
 
