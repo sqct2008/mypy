@@ -7,11 +7,11 @@
 #include <iostream>
 #include <string>
 #include <map>
+#include "symbolTable.h"
 
 extern void yyerror(const char*);
 extern void yyerror(const char*, const char);
 
-class SymbolTable;
 class Literal;
 
 // Class Literal inherits from Node; so I'm putting the include here!
@@ -22,50 +22,69 @@ class Literal;
 void freeAST(Node*);
 
 
-class IdentNode : public Node {
+class ReturnNode : public Node {
 public:
-  IdentNode(const std::string id) : Node(), ident(id) { } 
-  virtual ~IdentNode() {}
-  const std::string getIdent() const { return ident; }
+  ReturnNode(Node* _res) : Node(), res(_res) { } 
+  virtual ~ReturnNode() {}
   virtual const Literal* eval() const;
 private:
-  std::string ident;
+  Node* res;
 };
+
+class PrintNode : public Node {
+public:
+  PrintNode(Node* _res) : Node(), printList(_res) { } 
+  virtual ~PrintNode() {}
+  virtual const Literal* eval() const;
+private:
+  Node* printList;
+};
+
 
 class SuiteNode;
 
 class FuncNode : public Node {
 public:
-  FuncNode(SuiteNode* _suiteNode, TuplesLiteral* parameters) : Node(), suiteNode(_suiteNode) {
-    std::list<Node*> paras = parameters->getVec();
-    std::list<Node*>::iterator it = paras.begin();
-    while(it != paras.end()) {
-      IdentNode* ident = dynamic_cast<IdentNode*>(*it);
-      ident->getIdent();
-      new NoneTypeLiteral();
-      ++it;
-    }
-
-
-
-  } 
+  FuncNode() : Node() {}
+  FuncNode(std::string _id, TuplesLiteral* arguments) : Node(), id(_id), argumentsList(arguments) { } 
   virtual ~FuncNode() {}
   virtual const Literal* eval() const;
 private:
-  Node* parent = nullptr;
-  Node* son = nullptr;
-  std::vector<std::string> symboltable;
-  SuiteNode* suiteNode;
+  //SuiteNode* funcBody;
+  std::string id;
+  TuplesLiteral* argumentsList;
+  SymbolTable symbolTable;
+};
+
+class IdentNode : public Node {
+public:
+  IdentNode(const std::string id) : Node(), ident(id) { } 
+  virtual ~IdentNode() {}
+  const std::string getIdent() const { return ident; }
+  Node* getFunc();
+  virtual const Literal* eval() const;
+private:
+  std::string ident;
 };
 
 class SuiteNode : public Node {
 public:
-  SuiteNode(TuplesLiteral* _lines) : Node(), suite(_lines) { } 
+  SuiteNode(Node* line) { 
+    suite = new TuplesLiteral(line);
+    PoolOfNodes::getInstance().add(suite);
+  } 
   // FIXME: Is it better to do deconstruction here?
-  virtual ~SuiteNode() {}
+  virtual ~SuiteNode() { }
+  void setID(std::string );
+  void addLine(Node*);
+  void setParas(TuplesLiteral* );
   virtual const Literal* eval() const;
+  Literal* callSuite(TuplesLiteral*) const;
+  //TuplesLiteral* getSuite() { return suite; }
 private:
+  std::string id;
   TuplesLiteral* suite;
+  TuplesLiteral* parametersList;
 };
 
 class BinaryNode : public Node {
@@ -126,5 +145,17 @@ public:
 class ModBinaryNode : public BinaryNode {
 public:
   ModBinaryNode(Node* left, Node* right) : BinaryNode(left,right) { }
+  virtual const Literal* eval()const;
+};
+
+class LeftShiftNode : public BinaryNode {
+public:
+  LeftShiftNode(Node* left, Node* right) : BinaryNode(left,right) { }
+  virtual const Literal* eval()const;
+};
+
+class RightShiftNode : public BinaryNode {
+public:
+  RightShiftNode(Node* left, Node* right) : BinaryNode(left,right) { }
   virtual const Literal* eval()const;
 };

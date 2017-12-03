@@ -105,6 +105,9 @@ public:
     else
       throw "out of range!"; 
   }
+  Type getType() {
+    return _type;
+  }
 
   Node* getItem(int _begin, int _end) {
     int _size = tuples.size();

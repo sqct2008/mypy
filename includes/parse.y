@@ -26,7 +26,8 @@
 
 %type<node> atom plus_STRING power factor term arith_expr shift_expr opt_yield_test pick_yield_expr_testlist_comp testlist_comp pick_yield_expr_testlist testlist star_EQUAL expr_stmt test 
 %type<node> or_test and_test not_test comparison expr xor_expr and_expr testlist1 star_COMMA_test listmaker opt_listmaker dictorsetmaker opt_dictorsetmaker pick_for_test argument pick_argument
-%type<node> opt_arglist arglist trailer star_argument_COMMA parameters varargslist small_stmt simple_stmt star_trailer 
+%type<node> opt_arglist arglist trailer star_argument_COMMA parameters varargslist small_stmt simple_stmt star_trailer stmt star_SEMI_small_stmt suite plus_stmt compound_stmt star_fpdef_COMMA
+%type<node> fpdef fplist star_fpdef_notest opt_test print_stmt funcdef pick_NEWLINE_stmt star_NEWLINE_stmt 
 %type<id> NAME STRING
 %type<integer> INT 
 %type<floatnumber> FLOAT
@@ -47,14 +48,37 @@ start
 	;
 file_input // Used in: start
 	: star_NEWLINE_stmt ENDMARKER
+    { if($1) $1 -> eval(); }
 	;
 pick_NEWLINE_stmt // Used in: star_NEWLINE_stmt
 	: NEWLINE
+    { $$ = nullptr; }
 	| stmt
+    {
+      $$ = $1;
+      // XXX: Python doesn't consider root suite as a suite, they process each line
+      // XXX: whenever it is available. That is, I need to figure out whether it is a suite
+      //SuiteNode* subSuite = dynamic_cast<SuiteNode*>($1);
+      //if(!subSuite)
+      //  $1 -> eval(); 
+    }
+
 	;
 star_NEWLINE_stmt // Used in: file_input, star_NEWLINE_stmt
 	: star_NEWLINE_stmt pick_NEWLINE_stmt
+    { 
+      SuiteNode* root = dynamic_cast<SuiteNode*>($1);
+      if(root) {
+        root -> addLine($2);
+        $$ = root;
+      }
+      else {
+        $$ = new SuiteNode($2);
+        pool.add($$);
+      }
+    }
 	| %empty
+    { $$ = nullptr; }
 	;
 decorator // Used in: decorators
 	: AT dotted_name LPAR opt_arglist RPAR NEWLINE
@@ -77,6 +101,17 @@ decorated // Used in: compound_stmt
 funcdef // Used in: decorated, compound_stmt
 	: DEF NAME { ++depthOfFunc; } parameters COLON suite
     {
+      //$4 -> eval() -> print();
+      //const Node* suite = $6 -> eval();
+      //if(suite) 
+      //  suite -> print();
+      SuiteNode* suite = dynamic_cast<SuiteNode*>($6);
+      suite -> setParas(static_cast<TuplesLiteral*>($4));
+      IdentNode* id = new IdentNode($2);
+      pool.add(id);
+      suite -> setID($2);
+      delete [] $2;
+      $$ = $6 ;
       --depthOfFunc;
     }
 	;
@@ -88,7 +123,19 @@ parameters // Used in: funcdef
 	;
 varargslist // Used in: parameters, old_lambdef, lambdef
 	: star_fpdef_COMMA pick_STAR_DOUBLESTAR
+    { $$ = $1; }
 	| star_fpdef_COMMA fpdef opt_EQUAL_test opt_COMMA
+    { 
+      TuplesLiteral* list = dynamic_cast<TuplesLiteral*>($1);
+      if(list) {
+        list -> add_back($2);
+        $$ = list;
+      }
+      else {
+        $$ = new TuplesLiteral($2);
+        pool.add($$);
+      }
+    }
 	;
 opt_EQUAL_test // Used in: varargslist, star_fpdef_COMMA
 	: EQUAL test
@@ -96,7 +143,19 @@ opt_EQUAL_test // Used in: varargslist, star_fpdef_COMMA
 	;
 star_fpdef_COMMA // Used in: varargslist, star_fpdef_COMMA
 	: star_fpdef_COMMA fpdef opt_EQUAL_test COMMA
+    { 
+      TuplesLiteral* list = dynamic_cast<TuplesLiteral*>($1);
+      if(list) {
+        list -> add_back($2);
+        $$ = list;
+      }
+      else {
+        $$ = new TuplesLiteral($2);
+        pool.add($$);
+      }
+    }
 	| %empty
+    { $$ = nullptr; }
 	;
 opt_DOUBLESTAR_NAME // Used in: pick_STAR_DOUBLESTAR
 	: COMMA DOUBLESTAR NAME
@@ -112,51 +171,131 @@ opt_COMMA // Used in: varargslist, opt_test, opt_test_2, testlist_safe, listmake
 	;
 fpdef // Used in: varargslist, star_fpdef_COMMA, fplist, star_fpdef_notest
 	: NAME
+    { 
+      $$ = new IdentNode($1);
+      pool.add($$);
+      delete [] $1;
+    }
 	| LPAR fplist RPAR
+    { $$ = $2; } 
 	;
 fplist // Used in: fpdef
 	: fpdef star_fpdef_notest COMMA
+    {
+      TuplesLiteral* list = dynamic_cast<TuplesLiteral*>($2);
+      if(list) {
+        list -> add_front($1);
+        $$ = list;
+      }
+      else {
+        $$ = new TuplesLiteral($1);
+        pool.add($$);
+      }
+    }
 	| fpdef star_fpdef_notest
+    {
+      TuplesLiteral* list = dynamic_cast<TuplesLiteral*>($2);
+      if(list) {
+        list -> add_front($1);
+        $$ = list;
+      }
+      else {
+        $$ = new TuplesLiteral($1);
+        pool.add($$);
+      }
+    }
 	;
 star_fpdef_notest // Used in: fplist, star_fpdef_notest
 	: star_fpdef_notest COMMA fpdef
+    {
+      TuplesLiteral* tuple = dynamic_cast<TuplesLiteral*>($1);
+      if(tuple) {
+        tuple->add_back($3);
+        $$ = tuple;
+      }
+      else {
+        $$ = new TuplesLiteral($3);
+        pool.add($$);
+      }
+    }
 	| %empty
+    { $$ = nullptr; }
 	;
 stmt // Used in: pick_NEWLINE_stmt, plus_stmt
 	: simple_stmt
+    { $$ = $1; }
 	| compound_stmt
+    { $$ = $1; }
 	;
 simple_stmt // Used in: stmt, suite
 	: small_stmt star_SEMI_small_stmt SEMI NEWLINE
-    { $$ = $1; }
+    { 
+      TuplesLiteral* tupleExprs = dynamic_cast<TuplesLiteral*>($2);
+      if(tupleExprs) {
+        tupleExprs -> add_front($1); 
+        $$ = tupleExprs;
+      }
+      else 
+        $$ = $1; 
+    }
 	| small_stmt star_SEMI_small_stmt NEWLINE
-    { $$ = $1; }
+    { 
+      TuplesLiteral* tupleExprs = dynamic_cast<TuplesLiteral*>($2);
+      if(tupleExprs) {
+        tupleExprs -> add_front($1); 
+        $$ = tupleExprs;
+      }
+      else 
+        $$ = $1; 
+    }
 	;
 star_SEMI_small_stmt // Used in: simple_stmt, star_SEMI_small_stmt
 	: star_SEMI_small_stmt SEMI small_stmt
+    {
+      if($1) {
+        TuplesLiteral* tupleExprs = dynamic_cast<TuplesLiteral*>($1);
+        if(tupleExprs)
+          tupleExprs -> add_front($3);
+        else
+          throw "wrong expr list in star_SEMI_small_stmt";
+        $$ = tupleExprs;
+      }
+      else {
+        $$ = new TuplesLiteral($3);
+        pool.add($$);
+      }
+    }
 	| %empty
+    { $$ = nullptr; }
 	;
 small_stmt // Used in: simple_stmt, star_SEMI_small_stmt
 	: expr_stmt
     { 
       // No output when meeting assignment
-      AssBinaryNode* ass = dynamic_cast<AssBinaryNode*>($1); 
-      if(!ass) {
-        $1 -> eval() -> print(); 
-        std::cout << std::endl;
-      }
-      else 
-        $1 -> eval(); 
+      //AssBinaryNode* ass = dynamic_cast<AssBinaryNode*>($1); 
+      //if(!ass) {
+      //  $1 -> eval() -> print(); 
+      //  std::cout << std::endl;
+      //}
+      //else 
+      //  $1 -> eval(); 
       $$ = $1;
     }
 	| print_stmt
+    { $$ = $1; }
 	| del_stmt
+    { $$ = nullptr; }
 	| pass_stmt
+    { $$ = nullptr; }
 	| flow_stmt
+    { $$ = nullptr; }
 	| import_stmt
+    { $$ = nullptr; }
 	| global_stmt
 	| exec_stmt
+    { $$ = nullptr; }
 	| assert_stmt
+    { $$ = nullptr; }
 	;
 expr_stmt // Used in: small_stmt
 	: testlist augassign pick_yield_expr_testlist
@@ -164,31 +303,31 @@ expr_stmt // Used in: small_stmt
       Node* rhs;
       switch($2){
         case PLUSEQUAL:
-          rhs = new AddBinaryNode(const_cast<Literal*>($$->eval()), $3);
+          rhs = new AddBinaryNode($$, $3);
           pool.add(rhs);
           $$ = new AssBinaryNode($$, rhs);
           pool.add($$);
           break;
         case MINEQUAL:
-          rhs = new SubBinaryNode(const_cast<Literal*>($$->eval()), $3);
+          rhs = new SubBinaryNode($$, $3);
           pool.add(rhs);
           $$ = new AssBinaryNode($$, rhs);
           pool.add($$);
           break;
  	      case STAREQUAL:
-          rhs = new MulBinaryNode(const_cast<Literal*>($$->eval()), $3); 
+          rhs = new MulBinaryNode($$, $3);
           pool.add(rhs);
           $$ = new AssBinaryNode($$, rhs);
           pool.add($$);
           break;
 	      case SLASHEQUAL:
-          rhs = new DivBinaryNode(const_cast<Literal*>($$->eval()), $3);
+          rhs = new DivBinaryNode($$, $3);
           pool.add(rhs);
           $$ = new AssBinaryNode($$, rhs);
           pool.add($$);
           break;
 	      case PERCENTEQUAL:
-          rhs = new ModBinaryNode(const_cast<Literal*>($$->eval()), $3);
+          rhs = new ModBinaryNode($$, $3);
           pool.add(rhs);
           $$ = new AssBinaryNode($$, rhs);
           pool.add($$);
@@ -200,22 +339,29 @@ expr_stmt // Used in: small_stmt
 	      case CIRCUMFLEXEQUAL:
           break;
 	      case LEFTSHIFTEQUAL:
+          rhs = new ModBinaryNode($$, $3);
+          pool.add(rhs);
+          $$ = new LeftShiftNode($$, rhs);
+          pool.add($$);
           break;
 	      case RIGHTSHIFTEQUAL:
+          rhs = new ModBinaryNode($$, $3);
+          pool.add(rhs);
+          $$ = new RightShiftNode($$, rhs);
+          pool.add($$);
           break;
 	      case DOUBLESTAREQUAL:
-          rhs = new PowBinaryNode(const_cast<Literal*>($$->eval()), $3);
+          rhs = new PowBinaryNode($$, $3);
           pool.add(rhs);
           $$ = new AssBinaryNode($$, rhs);
           pool.add($$);
           break;
 	      case DOUBLESLASHEQUAL:
-          rhs = new DoubleSlashBinaryNode(const_cast<Literal*>($$->eval()), $3);
+          rhs = new DoubleSlashBinaryNode($$, $3);
           pool.add(rhs);
           $$ = new AssBinaryNode($$, rhs);
           pool.add($$);
           break;
-     
       }
     }
 	| testlist star_EQUAL
@@ -277,7 +423,12 @@ augassign // Used in: expr_stmt
 	;
 print_stmt // Used in: small_stmt
 	: PRINT opt_test
+    { 
+      $$ = new PrintNode($2);
+      pool.add($$);
+    }
 	| PRINT RIGHTSHIFT test opt_test_2
+    { $$ = $3; }
 	;
 star_COMMA_test // Used in: star_COMMA_test, opt_test, listmaker, testlist_comp, testlist, pick_for_test
 	: star_COMMA_test COMMA test
@@ -288,14 +439,14 @@ star_COMMA_test // Used in: star_COMMA_test, opt_test, listmaker, testlist_comp,
         if(idNode) 
           tuples -> add_back(idNode);
         else
-          tuples -> add_back(const_cast<Literal*>($3->eval()));
+          tuples -> add_back($3);
         $$ = tuples;
       }
       else {
         if(idNode)
           tuples = new TuplesLiteral(idNode);
         else
-          tuples = new TuplesLiteral(const_cast<Literal*>($3->eval()));
+          tuples = new TuplesLiteral($3);
         $$ = tuples;
         pool.add($$);
       }
@@ -308,24 +459,17 @@ opt_test // Used in: print_stmt
 	  {
       TuplesLiteral* tuples = dynamic_cast<TuplesLiteral*>($2);
       if(tuples) {
-        tuples -> add_front(const_cast<Literal*>($1->eval()));
-        const std::list<Node*>& elements = tuples -> getVec();
-        std::list<Node*>::const_iterator it = elements.begin();
-        while(it!=elements.end()){
-          (*it) -> eval() -> print();
-          it++;
-          if(it==elements.end()) {}
-          else
-            std::cout << ' ';
-        }
-      }
+        tuples -> add_front($1);
+        $$ = tuples;
+      }  
       else {
-        $1 -> eval() -> print();
+        TuplesLiteral* printTuple = new TuplesLiteral($1);
+        pool.add(printTuple);
+        $$ = printTuple;
       }
-      std::cout << std::endl;
     }
 	| %empty
-    { std::cout << std::endl; }
+    { $$ = nullptr; }
 	;
 plus_COMMA_test // Used in: plus_COMMA_test, opt_test_2
 	: plus_COMMA_test COMMA test
@@ -438,6 +582,7 @@ compound_stmt // Used in: stmt
 	| try_stmt
 	| with_stmt
 	| funcdef
+    { $$ = $1; }
 	| classdef
 	| decorated
 	;
@@ -510,11 +655,26 @@ opt_AS_COMMA // Used in: except_clause
 	;
 suite // Used in: funcdef, if_stmt, star_ELIF, while_stmt, for_stmt, try_stmt, plus_except, opt_ELSE, opt_FINALLY, with_stmt, classdef, except_Finally
 	: simple_stmt
+    { $$ = new SuiteNode($1); pool.add($$); }
 	| NEWLINE INDENT plus_stmt DEDENT
+    { $$ = $3; }
 	;
 plus_stmt // Used in: suite, plus_stmt
 	: plus_stmt stmt
+    { 
+      SuiteNode* suite = dynamic_cast<SuiteNode*>($1);
+      if(suite) {
+        suite -> addLine($2);
+        $$ = suite;
+      }
+      else
+        throw "wrong expr at plus_stmt";
+    }
 	| stmt
+    { 
+      $$ = new SuiteNode($1);
+      pool.add($$);
+    }
 	;
 testlist_safe // Used in: list_for
 	: old_test plus_COMMA_old_test opt_COMMA
@@ -608,32 +768,15 @@ shift_expr // Used in: and_expr, shift_expr
 	: arith_expr
     { $$ = $1; }
 	| shift_expr pick_LEFTSHIFT_RIGHTSHIFT arith_expr
-    { Node* rhs;
-      IntLiteral* _intLiteral = dynamic_cast<IntLiteral*>(const_cast<Literal*>($1->eval()));
+    { 
       switch($2){
         case LEFTSHIFT:
-          if(_intLiteral) {
-            IntLiteral* intNode = new IntLiteral(2);
-            pool.add(intNode);
-            rhs = new PowBinaryNode(intNode, $3);
-            pool.add(rhs);
-            $$ = new MulBinaryNode(_intLiteral, rhs);
-            pool.add($$);
-          }
-          else 
-            throw "error";
+          $$ = new LeftShiftNode($1, $3);
+          pool.add($$);
           break;
         case RIGHTSHIFT:
-          if(_intLiteral) {
-            IntLiteral* intNode = new IntLiteral(2);
-            pool.add(intNode);
-            rhs = new PowBinaryNode(intNode, $3);
-            pool.add(rhs);
-            $$ = new DivBinaryNode(_intLiteral, rhs);
-            pool.add($$);
-          }
-          else 
-            throw "error";
+          $$ = new RightShiftNode($1, $3);
+          pool.add($$);
           break;
         default:
           break;
@@ -742,12 +885,62 @@ pick_unop // Used in: factor
 	;
 power // Used in: factor
 	: atom star_trailer DOUBLESTAR factor
-    { $$ = new PowBinaryNode($1, $4); pool.add($$); }
+    { 
+      TuplesLiteral* argList = dynamic_cast<TuplesLiteral*>($2);
+      if(argList) {
+        IdentNode* id = dynamic_cast<IdentNode*>($1);
+        if(id) {
+          FuncNode* func = new FuncNode(id -> getIdent(), argList); 
+          pool.add(func);
+          $$ = new PowBinaryNode(func, $4); 
+          pool.add($$);
+        }
+        else
+          throw "wrong operation on function";
+      }
+      else {
+        $$ = new PowBinaryNode($1, $4); 
+        pool.add($$);
+      }
+    }
 	| atom star_trailer
-    { $$ = $1; }
+    { 
+      TuplesLiteral* argList = dynamic_cast<TuplesLiteral*>($2);
+      if(argList) {
+        argList -> eval() -> print();
+        IdentNode* id = dynamic_cast<IdentNode*>($1);
+        if(id) {
+          $$ = new FuncNode(id -> getIdent(), argList); 
+          pool.add($$);
+        }
+        else
+          throw "wrong operation on function";
+      }
+      else
+        $$ = $1;
+    }
 	;
 star_trailer // Used in: power, star_trailer
 	: star_trailer trailer
+    {
+      TuplesLiteral* arg_list = dynamic_cast<TuplesLiteral*>($1);
+      if(arg_list) {
+        if(arg_list->getType() == tuple) {
+          std::cout << "right way" << std::endl;
+          arg_list -> add_back($2);
+          $$ = arg_list;
+        }
+        else {
+          std::cout << "wrong way" << std::endl;
+          $$ = new TuplesLiteral($2);
+          pool.add($$);
+        }
+      }
+      else {
+        $$ = new TuplesLiteral($2);
+        pool.add($$);
+      }
+    }
 	| %empty
     { $$ = nullptr; }
 	;
@@ -868,7 +1061,7 @@ listmaker // Used in: opt_listmaker
         if(idNode)
           tuples -> add_front(idNode);
         else
-          tuples -> add_front(const_cast<Literal*>($1->eval()));
+          tuples -> add_front($1);
         $$ = tuples;
       }
       else {
@@ -887,7 +1080,7 @@ testlist_comp // Used in: pick_yield_expr_testlist_comp
         if(idNode)
           tuples -> add_front(idNode);
         else
-          tuples -> add_front(const_cast<Literal*>($1->eval()));
+          tuples -> add_front($1);
         $$ = tuples;
       }
       else {
@@ -901,9 +1094,14 @@ lambdef // Used in: test
 	;
 trailer // Used in: star_trailer
 	: LPAR opt_arglist RPAR
-    { //FIXIT: type 
-      //$2->setType(tuple); 
-      $$ = $2; 
+    { // FIXME: type 
+      TuplesLiteral* tuple = dynamic_cast<TuplesLiteral*>($2);
+      if(tuple) {
+        tuple -> setType(list); 
+        $$ = tuple; 
+      }
+      else
+        $$ = $2;
     }
 	| LSQB subscriptlist RSQB
     { $$ = nullptr; }
@@ -952,7 +1150,7 @@ testlist // Used in: expr_stmt, pick_yield_expr_testlist, return_stmt, for_stmt,
         if(idNode)
           tuples -> add_front(idNode);
         else
-          tuples -> add_front(const_cast<Literal*>($1->eval()));
+          tuples -> add_front($1);
         $$ = tuples;
       }
       else {
@@ -967,7 +1165,7 @@ testlist // Used in: expr_stmt, pick_yield_expr_testlist, return_stmt, for_stmt,
         if(idNode)
           tuples -> add_front(idNode);
         else
-          tuples -> add_front(const_cast<Literal*>($1->eval()));
+          tuples -> add_front($1);
         $$ = tuples;
       }
       else {
@@ -986,7 +1184,7 @@ dictorsetmaker // Used in: opt_dictorsetmaker
         if(idNode)
           tuples -> add_front(idNode);
         else
-          tuples -> add_front(const_cast<Literal*>($1->eval()));
+          tuples -> add_front($1);
         $$ = tuples;
       }
       else {
@@ -1027,12 +1225,13 @@ arglist // Used in: opt_arglist
 		{
       TuplesLiteral* tuples = dynamic_cast<TuplesLiteral*>($1);
       if(tuples) {
-        IdentNode* idNode = dynamic_cast<IdentNode*>($1);
-        if(idNode)
-          tuples -> add_back(idNode);
+        //IdentNode* idNode = dynamic_cast<IdentNode*>($2);
+        if($2) {
+          tuples -> add_back($2);
+          $$ = tuples;
+        }
         else
-          tuples -> add_back(const_cast<Literal*>($1->eval()));
-        $$ = tuples;
+          $$ = $1;
       }
       else {
         $$ = $2;
@@ -1048,14 +1247,14 @@ star_argument_COMMA // Used in: arglist, star_argument_COMMA
         if(idNode) 
           tuples -> add_back(idNode);
         else
-          tuples -> add_back(const_cast<Literal*>($2->eval()));
+          tuples -> add_back($2);
         $$ = tuples;
       }
       else {
         if(idNode)
           tuples = new TuplesLiteral(idNode);
         else
-          tuples = new TuplesLiteral(const_cast<Literal*>($2->eval()));
+          tuples = new TuplesLiteral($2);
         $$ = tuples;
         pool.add($$);
       }
@@ -1073,7 +1272,7 @@ opt_DOUBLESTAR_test // Used in: pick_argument
 	;
 pick_argument // Used in: arglist
 	: argument opt_COMMA
-    { $$ = $1; }
+    { $$ = $1; } 
 	| STAR test star_COMMA_argument opt_DOUBLESTAR_test
     { $$ = nullptr; }
 	| DOUBLESTAR test
@@ -1124,14 +1323,14 @@ testlist1 // Used in: atom, testlist1
         if(idNode) 
           tuples -> add_back(idNode);
         else
-          tuples -> add_back(const_cast<Literal*>($3->eval()));
+          tuples -> add_back($3);
         $$ = tuples;
       }
       else {
         if(idNode)
           tuples = new TuplesLiteral(idNode);
         else
-          tuples = new TuplesLiteral(const_cast<Literal*>($3->eval()));
+          tuples = new TuplesLiteral($3);
         $$ = tuples;
         pool.add($$);
       }
