@@ -12,15 +12,17 @@ class TuplesLiteral;
 class SymbolTable {
 public:
   SymbolTable() {}
-  void setValue(const std::string& name, const Literal* val);
+  //void setValue(const std::string& name, const Literal* val);
   void setValue(const std::string& name, Node* val);
   void setValue(TuplesLiteral*, TuplesLiteral*);
-  const Literal* getValue(const std::string& name) const;
-  Node* getFunc(const std::string& name) const;
+  void setParents(SymbolTable* symbolTable);
+  //const Literal* getValue(const std::string& name) const;
+  Node* getValue(const std::string& name) const;
+  //SymbolTable* operator=(const SymbolTable*);
+  void print() const;
 private:
-  std::map<std::string, const Literal*> table_var;
-  std::map<std::string, Node*> table_func;
-  SymbolTable* parent = nullptr;
+  std::map<std::string, Node*> table;
+  SymbolTable* parents = nullptr;
 };
 
 #endif

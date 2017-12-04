@@ -8,6 +8,8 @@
   unsigned depthOfFunc = 0;
   unsigned depthOfClass = 0;
   PoolOfNodes& pool = PoolOfNodes::getInstance();
+  SymbolTable sTable;
+  extern NoneTypeLiteral NONE;
 %}
 
 
@@ -27,7 +29,7 @@
 %type<node> atom plus_STRING power factor term arith_expr shift_expr opt_yield_test pick_yield_expr_testlist_comp testlist_comp pick_yield_expr_testlist testlist star_EQUAL expr_stmt test 
 %type<node> or_test and_test not_test comparison expr xor_expr and_expr testlist1 star_COMMA_test listmaker opt_listmaker dictorsetmaker opt_dictorsetmaker pick_for_test argument pick_argument
 %type<node> opt_arglist arglist trailer star_argument_COMMA parameters varargslist small_stmt simple_stmt star_trailer stmt star_SEMI_small_stmt suite plus_stmt compound_stmt star_fpdef_COMMA
-%type<node> fpdef fplist star_fpdef_notest opt_test print_stmt funcdef pick_NEWLINE_stmt star_NEWLINE_stmt 
+%type<node> fpdef fplist star_fpdef_notest opt_test print_stmt funcdef pick_NEWLINE_stmt star_NEWLINE_stmt flow_stmt return_stmt
 %type<id> NAME STRING
 %type<integer> INT 
 %type<floatnumber> FLOAT
@@ -48,7 +50,9 @@ start
 	;
 file_input // Used in: start
 	: star_NEWLINE_stmt ENDMARKER
-    { if($1) $1 -> eval(); }
+    { if($1) $1 -> eval(&sTable); 
+      //sTable.print();
+    }
 	;
 pick_NEWLINE_stmt // Used in: star_NEWLINE_stmt
 	: NEWLINE
@@ -288,7 +292,7 @@ small_stmt // Used in: simple_stmt, star_SEMI_small_stmt
 	| pass_stmt
     { $$ = nullptr; }
 	| flow_stmt
-    { $$ = nullptr; }
+    { $$ = $1; }
 	| import_stmt
     { $$ = nullptr; }
 	| global_stmt
@@ -424,11 +428,16 @@ augassign // Used in: expr_stmt
 print_stmt // Used in: small_stmt
 	: PRINT opt_test
     { 
+      //$2->eval(&sTable)->print();
+      //std::cout << 's' << std::endl;
       $$ = new PrintNode($2);
       pool.add($$);
     }
 	| PRINT RIGHTSHIFT test opt_test_2
-    { $$ = $3; }
+    { 
+      $$ = new PrintNode($3);
+      pool.add($$);
+    }
 	;
 star_COMMA_test // Used in: star_COMMA_test, opt_test, listmaker, testlist_comp, testlist, pick_for_test
 	: star_COMMA_test COMMA test
@@ -489,6 +498,7 @@ flow_stmt // Used in: small_stmt
 	: break_stmt
 	| continue_stmt
 	| return_stmt
+    { $$ = $1; }
 	| raise_stmt
 	| yield_stmt
 	;
@@ -500,7 +510,15 @@ continue_stmt // Used in: flow_stmt
 	;
 return_stmt // Used in: flow_stmt
 	: RETURN testlist
+    {
+      $$ = new ReturnNode($2);
+      pool.add($$);
+    }
 	| RETURN
+    {
+      $$ = new ReturnNode(&NONE);
+      pool.add($$);
+    }
 	;
 yield_stmt // Used in: flow_stmt
 	: yield_expr
@@ -907,7 +925,7 @@ power // Used in: factor
     { 
       TuplesLiteral* argList = dynamic_cast<TuplesLiteral*>($2);
       if(argList) {
-        argList -> eval() -> print();
+        //argList -> eval() -> print();
         IdentNode* id = dynamic_cast<IdentNode*>($1);
         if(id) {
           $$ = new FuncNode(id -> getIdent(), argList); 
@@ -926,7 +944,7 @@ star_trailer // Used in: power, star_trailer
       TuplesLiteral* arg_list = dynamic_cast<TuplesLiteral*>($1);
       if(arg_list) {
         if(arg_list->getType() == tuple) {
-          std::cout << "right way" << std::endl;
+          //std::cout << "right way" << std::endl;
           arg_list -> add_back($2);
           $$ = arg_list;
         }
@@ -1100,8 +1118,11 @@ trailer // Used in: star_trailer
         tuple -> setType(list); 
         $$ = tuple; 
       }
-      else
-        $$ = $2;
+      // IS nullptr
+      else {
+        $$ = new TuplesLiteral();
+        pool.add($$);
+      }
     }
 	| LSQB subscriptlist RSQB
     { $$ = nullptr; }
@@ -1225,7 +1246,6 @@ arglist // Used in: opt_arglist
 		{
       TuplesLiteral* tuples = dynamic_cast<TuplesLiteral*>($1);
       if(tuples) {
-        //IdentNode* idNode = dynamic_cast<IdentNode*>($2);
         if($2) {
           tuples -> add_back($2);
           $$ = tuples;
@@ -1234,7 +1254,9 @@ arglist // Used in: opt_arglist
           $$ = $1;
       }
       else {
-        $$ = $2;
+        // XXX: return of arglist must be a list!
+        $$ = new TuplesLiteral($2);
+        pool.add($$);
       }
     }
 	;

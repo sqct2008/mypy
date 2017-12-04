@@ -50,7 +50,7 @@ public:
   virtual const Literal* doubleSlash(const NoneTypeLiteral*) const =0;
   virtual const Literal* doubleSlash(const ContainerLiteral*) const =0;
 
-  virtual const Literal* eval() const = 0;
+  virtual const Node* eval(SymbolTable*) = 0;
   virtual void print() const { 
     std::cout << "No Way" << std::endl; 
   }
@@ -171,7 +171,7 @@ public:
     throw "cannot doubleSlash \'NoneType\' with \'Container\'!";
   }
 
-  virtual const Literal* eval() const { return this; }
+  virtual const Node* eval(SymbolTable*) { return this; }
   virtual void print() const { 
     std::cout << "None"; 
   }
@@ -275,7 +275,7 @@ public:
     throw "cannot doubleslash \'Container\' with \'container\'!";
   }
 
-  virtual const Literal* eval() const = 0; 
+  virtual const Node* eval(SymbolTable*) = 0; 
   virtual void print() const { 
     std::cout << "No way!" << std::endl;
   }
@@ -425,7 +425,7 @@ public:
     throw "cannot doubleslash \'Container\' with \'float\'!";
   }
 
-  virtual const Literal* eval() const { return this; }
+  virtual const Node* eval(SymbolTable*) { return this; }
   virtual void print() const { 
     //std::cout << "FLOAT:" << val ; 
     std::cout << std::setprecision(17) << val ; 
@@ -578,7 +578,7 @@ public:
     throw "cannot doubleslash \'int\' with \'Container\'!";
   }
 
-  virtual const Literal* eval() const { return this; }
+  virtual const Node* eval(SymbolTable*) { return this; }
   virtual void print() const { 
     //std::cout << "INT:" << val ; 
     std::cout << val ; 

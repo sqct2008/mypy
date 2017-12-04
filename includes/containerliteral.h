@@ -2,6 +2,8 @@
 #include <list>
 #include "literal.h"
 
+extern NoneTypeLiteral NONE;
+
 class StrLiteral: public ContainerLiteral {
 public:
   ~StrLiteral() {};
@@ -69,7 +71,7 @@ public:
     return rhs.opPower(this);
   }
 
-  virtual const Literal* eval() const { return this; }
+  virtual const Node* eval(SymbolTable*) { return this; }
   virtual void print() const { 
     std::cout << val ;
   }
@@ -107,6 +109,24 @@ public:
   }
   Type getType() {
     return _type;
+  }
+  // XXX: only used in arglist
+  Node* pop_front() {
+    std::list<Node*>::iterator it = tuples.begin();
+
+    if(it == tuples.end())
+      return &NONE;
+
+    Node* res = *it;
+    tuples.erase(it);
+    return res;
+  }
+
+  Node* getFirst() {
+    std::list<Node*>::iterator it = tuples.begin();
+    if(it == tuples.end())
+      return &NONE;
+    return *it;
   }
 
   Node* getItem(int _begin, int _end) {
@@ -146,7 +166,7 @@ public:
   void execution() {
     std::list<Node*>::iterator it = tuples.begin();
     while(it != tuples.end()) {
-      (*it)->eval();
+      (*it)->eval(symbolTable);
       ++it;
     }
   }
@@ -236,7 +256,21 @@ public:
     return rhs.opPower(this);
   }
 
-  virtual const Literal* eval() const { return this; }
+  virtual const Node* eval(SymbolTable* _sTable) { 
+    symbolTable = _sTable; 
+    TuplesLiteral* res = new TuplesLiteral();
+    PoolOfNodes::getInstance().add(res);
+    res -> _type = this -> _type;
+    std::list<Node*>::const_iterator it = tuples.begin();
+    //std::cout << "in tuple eval" << std::endl;
+    while(it!=tuples.end()){
+      res -> add_back(const_cast<Node*>((*it)->eval(symbolTable)));
+      //std::cout << "1" << std::endl;
+      it++;
+    }
+    return res; 
+  }
+
 
   virtual void print() const { 
     std::list<Node*>::const_iterator it;
@@ -246,13 +280,13 @@ public:
         it = tuples.begin();
         while(it!=tuples.end()){
           // the warning is fake!
-          if(dynamic_cast<StrLiteral*>(const_cast<Literal*>((*it)->eval()))) {
+          if(dynamic_cast<StrLiteral*>(const_cast<Node*>((*it)->eval(symbolTable)))) {
             std::cout << '\'';
-            (*it) -> eval() -> print();
+            (*it) -> eval(symbolTable) -> print();
             std::cout << '\'';
           }
           else {
-            (*it) -> eval() -> print();
+            (*it) -> eval(symbolTable) -> print();
           }
           it++;
           if(it==tuples.end()) { }
@@ -266,13 +300,13 @@ public:
         it = tuples.begin();
         while(it!=tuples.end()){
           // the warning is fake!
-          if(dynamic_cast<StrLiteral*>(const_cast<Literal*>((*it)->eval()))) {
+          if(dynamic_cast<StrLiteral*>(const_cast<Node*>((*it)->eval(symbolTable)))) {
             std::cout << '\'';
-            (*it) -> eval() -> print();
+            (*it) -> eval(symbolTable) -> print();
             std::cout << '\'';
           }
           else {
-            (*it) -> eval() -> print();
+            (*it) -> eval(symbolTable) -> print();
           }
           it++;
           if(it==tuples.end()) { }
@@ -286,13 +320,13 @@ public:
         it = tuples.begin();
         while(it!=tuples.end()){
           // the warning is fake!
-          if(dynamic_cast<StrLiteral*>(const_cast<Literal*>((*it)->eval()))) {
+          if(dynamic_cast<StrLiteral*>(const_cast<Node*>((*it)->eval(symbolTable)))) {
             std::cout << '\'';
-            (*it) -> eval() -> print();
+            (*it) -> eval(symbolTable) -> print();
             std::cout << '\'';
           }
           else {
-            (*it) -> eval() -> print();
+            (*it) -> eval(symbolTable) -> print();
           }
           it++;
           if(it==tuples.end()) { }
@@ -308,6 +342,7 @@ public:
 private:
   std::list<Node*> tuples;
   Type _type = tuple;
+  SymbolTable* symbolTable;
 };
 
 

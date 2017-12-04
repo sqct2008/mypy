@@ -26,7 +26,7 @@ class ReturnNode : public Node {
 public:
   ReturnNode(Node* _res) : Node(), res(_res) { } 
   virtual ~ReturnNode() {}
-  virtual const Literal* eval() const;
+  virtual const Node* eval(SymbolTable*);
 private:
   Node* res;
 };
@@ -35,7 +35,7 @@ class PrintNode : public Node {
 public:
   PrintNode(Node* _res) : Node(), printList(_res) { } 
   virtual ~PrintNode() {}
-  virtual const Literal* eval() const;
+  virtual const Node* eval(SymbolTable*);
 private:
   Node* printList;
 };
@@ -46,14 +46,15 @@ class SuiteNode;
 class FuncNode : public Node {
 public:
   FuncNode() : Node() {}
+  FuncNode(TuplesLiteral* arguments) : Node(), argumentsList(arguments) { } 
   FuncNode(std::string _id, TuplesLiteral* arguments) : Node(), id(_id), argumentsList(arguments) { } 
   virtual ~FuncNode() {}
-  virtual const Literal* eval() const;
+  virtual const Node* eval(SymbolTable*);
 private:
   //SuiteNode* funcBody;
   std::string id;
   TuplesLiteral* argumentsList;
-  SymbolTable symbolTable;
+  SymbolTable* symbolTable;
 };
 
 class IdentNode : public Node {
@@ -61,8 +62,7 @@ public:
   IdentNode(const std::string id) : Node(), ident(id) { } 
   virtual ~IdentNode() {}
   const std::string getIdent() const { return ident; }
-  Node* getFunc();
-  virtual const Literal* eval() const;
+  virtual const Node* eval(SymbolTable*);
 private:
   std::string ident;
 };
@@ -75,10 +75,12 @@ public:
   } 
   // FIXME: Is it better to do deconstruction here?
   virtual ~SuiteNode() { }
-  void setID(std::string );
+  void setID(std::string);
+  std::string getID() { return id; }
   void addLine(Node*);
   void setParas(TuplesLiteral* );
-  virtual const Literal* eval() const;
+  Node* getParas();
+  virtual const Node* eval(SymbolTable*);
   Literal* callSuite(TuplesLiteral*) const;
   //TuplesLiteral* getSuite() { return suite; }
 private:
@@ -90,7 +92,7 @@ private:
 class BinaryNode : public Node {
 public:
   BinaryNode(Node* l, Node* r) : Node(), left(l), right(r) {}
-  virtual const Literal* eval() const = 0;
+  virtual const Node* eval(SymbolTable*) = 0;
   Node* getLeft()  const { return left; }
   Node* getRight() const { return right; }
   BinaryNode(const BinaryNode&) = delete;
@@ -103,59 +105,59 @@ protected:
 class AssBinaryNode : public BinaryNode {
 public:
   AssBinaryNode(Node* left, Node* right);
-  virtual const Literal* eval() const;
+  virtual const Node* eval(SymbolTable*);
 };
 
 class AddBinaryNode : public BinaryNode {
 public:
   AddBinaryNode(Node* left, Node* right) : BinaryNode(left, right) { }
-  virtual const Literal* eval() const;
+  virtual const Node* eval(SymbolTable*);
 };
 
 class SubBinaryNode : public BinaryNode {
 public:
   SubBinaryNode(Node* left, Node* right) : BinaryNode(left, right) { }
-  virtual const Literal* eval() const;
+  virtual const Node* eval(SymbolTable*);
 };
 
 class MulBinaryNode : public BinaryNode {
 public:
   MulBinaryNode(Node* left, Node* right) : BinaryNode(left, right) {}
-  virtual const Literal* eval() const;
+  virtual const Node* eval(SymbolTable*);
 };
 
 class DivBinaryNode : public BinaryNode {
 public:
   DivBinaryNode(Node* left, Node* right) : BinaryNode(left, right) { }
-  virtual const Literal* eval() const;
+  virtual const Node* eval(SymbolTable*);
 };
 
 class DoubleSlashBinaryNode : public BinaryNode {
 public:
   DoubleSlashBinaryNode(Node* left, Node* right) : BinaryNode(left, right) { }
-  virtual const Literal* eval() const;
+  virtual const Node* eval(SymbolTable*);
 };
 
 class PowBinaryNode : public BinaryNode {
 public:
   PowBinaryNode(Node* left, Node* right) : BinaryNode(left, right) { }
-  virtual const Literal* eval()const;
+  virtual const Node* eval(SymbolTable*);
 };
 
 class ModBinaryNode : public BinaryNode {
 public:
   ModBinaryNode(Node* left, Node* right) : BinaryNode(left,right) { }
-  virtual const Literal* eval()const;
+  virtual const Node* eval(SymbolTable*);
 };
 
 class LeftShiftNode : public BinaryNode {
 public:
   LeftShiftNode(Node* left, Node* right) : BinaryNode(left,right) { }
-  virtual const Literal* eval()const;
+  virtual const Node* eval(SymbolTable*);
 };
 
 class RightShiftNode : public BinaryNode {
 public:
   RightShiftNode(Node* left, Node* right) : BinaryNode(left,right) { }
-  virtual const Literal* eval()const;
+  virtual const Node* eval(SymbolTable*);
 };
