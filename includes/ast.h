@@ -22,6 +22,16 @@ class Literal;
 void freeAST(Node*);
 
 
+class IdentNode : public Node {
+public:
+  IdentNode(const std::string id) : Node(), ident(id) { } 
+  virtual ~IdentNode() {}
+  const std::string getIdent() const { return ident; }
+  virtual const Node* eval(SymbolTable*);
+private:
+  std::string ident;
+};
+
 class ReturnNode : public Node {
 public:
   ReturnNode(Node* _res) : Node(), res(_res) { } 
@@ -40,40 +50,38 @@ private:
   Node* printList;
 };
 
+class FuncNode : public Node {
+public:
+  FuncNode(std::string _id, TuplesLiteral* arguments) : Node(), id(_id), argumentsList(arguments){ } 
+  //FuncNode(, TuplesLiteral* arguments) : Node(), id(_id), argumentsList(arguments){ } 
+  virtual ~FuncNode() { delete symbolTable; }
+  virtual const Node* eval(SymbolTable*);
+private:
+  std::string id;
+  TuplesLiteral* argumentsList;
+  SymbolTable* symbolTable = nullptr;
+};
 
 class SuiteNode;
 
-class FuncNode : public Node {
+class ClosureNode : public Node {
 public:
-  FuncNode() : Node() {}
-  FuncNode(TuplesLiteral* arguments) : Node(), argumentsList(arguments) { } 
-  FuncNode(std::string _id, TuplesLiteral* arguments) : Node(), id(_id), argumentsList(arguments) { } 
-  virtual ~FuncNode() {}
+  ClosureNode(SuiteNode* _suite, SymbolTable* _symbolTable) : suite(_suite), symbolTable(_symbolTable) {  }
+  // They are all copy of other node's attribute, so no need to delete
+  virtual ~ClosureNode() {}
+  SymbolTable* getSymbolTable() { return symbolTable; }
+  SuiteNode* getSuiteNode() { return suite; }
   virtual const Node* eval(SymbolTable*);
 private:
-  //SuiteNode* funcBody;
-  std::string id;
-  TuplesLiteral* argumentsList;
+  SuiteNode* suite;
   SymbolTable* symbolTable;
-};
-
-class IdentNode : public Node {
-public:
-  IdentNode(const std::string id) : Node(), ident(id) { } 
-  virtual ~IdentNode() {}
-  const std::string getIdent() const { return ident; }
-  virtual const Node* eval(SymbolTable*);
-private:
-  std::string ident;
 };
 
 class SuiteNode : public Node {
 public:
-  SuiteNode(Node* line) { 
-    suite = new TuplesLiteral(line);
+  SuiteNode(Node* line) : suite(new TuplesLiteral(line)) { 
     PoolOfNodes::getInstance().add(suite);
   } 
-  // FIXME: Is it better to do deconstruction here?
   virtual ~SuiteNode() { }
   void setID(std::string);
   std::string getID() { return id; }
@@ -81,8 +89,6 @@ public:
   void setParas(TuplesLiteral* );
   Node* getParas();
   virtual const Node* eval(SymbolTable*);
-  Literal* callSuite(TuplesLiteral*) const;
-  //TuplesLiteral* getSuite() { return suite; }
 private:
   std::string id;
   TuplesLiteral* suite;

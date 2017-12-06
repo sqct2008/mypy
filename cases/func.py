@@ -31,6 +31,16 @@ def g(x):
     return g
 g(1)(2)(3)
 
+def f(x):
+    print x
+    return f
+
+def g(x):
+    print x
+    f(x)
+    return g
+g(1)(2)(3)
+
 def h(x):
     print x
     def a(z):
@@ -51,4 +61,14 @@ def f(x):
 f(2)
 a=f(3)
 a()
+
+def f() :
+    x = 1
+    def g(x) :
+        x += 1
+        print x
+        return x
+    x = g(x)
+    print x
+f()
 

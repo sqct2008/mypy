@@ -83,9 +83,11 @@ int main(int argc, char * argv[]) {
   }
   catch ( const char* msg ) {
     std::cout << "oops: " << msg << std::endl;
+    PoolOfNodes::getInstance().drainThePool();
   }
   catch ( const std::string msg ) {
     std::cout << "oops: " << msg << std::endl;
+    PoolOfNodes::getInstance().drainThePool();
   }
 
   fclose(input_file);

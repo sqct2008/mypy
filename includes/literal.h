@@ -349,11 +349,15 @@ public:
     return rhs.opDiv(val);
   }
   virtual const Literal* opDiv(long double lhs) const {
+    if(val == 0)
+      throw "cannot divided by zero";
     const Literal* node = new FloatLiteral(lhs / val);
     PoolOfNodes::getInstance().add(node);
     return node;
   }
   virtual const Literal* opDiv(int lhs) const {
+    if(val == 0)
+      throw "cannot divided by zero";
     const Literal* node = new FloatLiteral(lhs / val);
     PoolOfNodes::getInstance().add(node);
     return node;
@@ -503,11 +507,15 @@ public:
     return rhs.opDiv(val);
   }
   virtual const Literal* opDiv(long double lhs) const {
+    if(val == 0)
+      throw "cannot divided by zero";
     const Literal* node = new FloatLiteral(lhs / val);
     PoolOfNodes::getInstance().add(node);
     return node;
   }
   virtual const Literal* opDiv(int lhs) const {
+    if(val == 0)
+      throw "cannot divided by zero";
     const Literal* node = new IntLiteral(floor(static_cast<long double>(lhs) / val));
     PoolOfNodes::getInstance().add(node);
     return node;

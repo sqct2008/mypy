@@ -6,19 +6,18 @@
 #include <map>
 
 class Node;
-class Literal;
 class TuplesLiteral;
 
 class SymbolTable {
 public:
   SymbolTable() {}
-  //void setValue(const std::string& name, const Literal* val);
+  ~SymbolTable() {}
   void setValue(const std::string& name, Node* val);
   void setValue(TuplesLiteral*, TuplesLiteral*);
   void setParents(SymbolTable* symbolTable);
-  //const Literal* getValue(const std::string& name) const;
-  Node* getValue(const std::string& name) const;
-  //SymbolTable* operator=(const SymbolTable*);
+  Node* getValue(const std::string name) const;
+  bool findNative(const std::string name) const;
+  //SymbolTable& operator=(const SymbolTable&);
   void print() const;
 private:
   std::map<std::string, Node*> table;

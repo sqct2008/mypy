@@ -129,6 +129,7 @@ public:
     return *it;
   }
 
+
   Node* getItem(int _begin, int _end) {
     int _size = tuples.size();
     if(_begin < 0)
@@ -153,8 +154,8 @@ public:
         std::advance(end_it, _end);
         new_list.splice( new_list.begin(), copy_tuple, begin_it, end_it );
         TuplesLiteral* node = new TuplesLiteral(new_list);
-        node->setType(_type);
         PoolOfNodes::getInstance().add(node);
+        node->setType(_type);
         return node;
       }
     }
@@ -197,8 +198,8 @@ public:
       std::list<Node*> new_vec = tupleNode->tuples;
       new_vec.insert( new_vec.end(), tuples.begin(), tuples.end() );
       TuplesLiteral* node = new TuplesLiteral(new_vec);
-      node->setType(t);
       PoolOfNodes::getInstance().add(node);
+      node->setType(t);
       return node;
     }
     else
@@ -217,14 +218,14 @@ public:
       throw "cannot mult set!";
     if( lhs <= 0 ) {
       TuplesLiteral* node = new TuplesLiteral();
-      node->setType(this->_type);
       PoolOfNodes::getInstance().add(node);
+      node->setType(this->_type);
       return node;
     }
     else if( lhs == 1 ) {
       TuplesLiteral* node = new TuplesLiteral(tuples);
-      node->setType(this->_type);
       PoolOfNodes::getInstance().add(node);
+      node->setType(this->_type);
       return node;
     }
     else {
@@ -233,8 +234,8 @@ public:
         new_tuples.insert(new_tuples.end(), tuples.begin(), tuples.end());
       }
       TuplesLiteral* node = new TuplesLiteral(new_tuples);
-      node->setType(this->_type);
       PoolOfNodes::getInstance().add(node);
+      node->setType(this->_type);
       return node;
     }
   }
