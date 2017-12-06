@@ -92,24 +92,15 @@ const Node* FuncNode::eval(SymbolTable* _symbolTable) {
       // XXX: NEED to FIRST get value of FUNCTION
       AssBinaryNode* assParas = new AssBinaryNode(suite -> getParas(), const_cast<Node*>(arguments -> eval(symbolTable)));
       PoolOfNodes::getInstance().add(assParas);
-      //SetToNone(suite -> getParas(), symbolTable);
       assParas -> eval(symbolTable);
 
       // eval function body
       Node* res = const_cast<Node*>(suite -> eval(symbolTable));
       closure = dynamic_cast<ClosureNode*>(res); 
-      // go new func
-      //if(false) {
-      //  // XXX: SHALL NOT ruin the argumentsList of original function! Otherwise you may not call it again!
-      //  TuplesLiteral* new_argumentsList = new TuplesLiteral(argumentsList -> getVec());
-      //  PoolOfNodes::getInstance().add(new_argumentsList);
-      //  new_argumentsList -> pop_front();
-      //  FuncNode* next_func = new FuncNode(suite->getID(), new_argumentsList);
-      //  PoolOfNodes::getInstance().add(next_func);
-      //  return next_func -> eval(symbolTable);
-      //}
       // return value should not be suitenode
       if(closure) {
+        // TODO:
+        closure -> getSymbolTable() -> print();
         std::cout << "new closure" << std::endl;
         TuplesLiteral* new_argumentsList = new TuplesLiteral(argumentsList -> getVec());
         PoolOfNodes::getInstance().add(new_argumentsList);
