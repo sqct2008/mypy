@@ -72,3 +72,19 @@ def f() :
     print x
 f()
 
+def f():
+    x=1
+    def g(x):
+        x += 1
+        print x
+        def c(x):
+            y = x
+            print y
+        c(x)
+    g(x)
+f()
+
+def f(x):
+    print x
+    f(x+1)
+f(3)

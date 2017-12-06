@@ -50,23 +50,24 @@ private:
   Node* printList;
 };
 
+class SuiteNode;
+
 class FuncNode : public Node {
 public:
   FuncNode(std::string _id, TuplesLiteral* arguments) : Node(), id(_id), argumentsList(arguments){ } 
-  //FuncNode(, TuplesLiteral* arguments) : Node(), id(_id), argumentsList(arguments){ } 
+  FuncNode(Node* _node, TuplesLiteral* arguments); 
   virtual ~FuncNode() { delete symbolTable; }
   virtual const Node* eval(SymbolTable*);
 private:
   std::string id;
+  Node* node = nullptr;
   TuplesLiteral* argumentsList;
   SymbolTable* symbolTable = nullptr;
 };
 
-class SuiteNode;
-
 class ClosureNode : public Node {
 public:
-  ClosureNode(SuiteNode* _suite, SymbolTable* _symbolTable) : suite(_suite), symbolTable(_symbolTable) {  }
+  ClosureNode(SuiteNode* _suite, SymbolTable* _symbolTable) : suite(_suite), symbolTable(_symbolTable) { }
   // They are all copy of other node's attribute, so no need to delete
   virtual ~ClosureNode() {}
   SymbolTable* getSymbolTable() { return symbolTable; }

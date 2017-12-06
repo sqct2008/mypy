@@ -69,6 +69,12 @@ const Node* PrintNode::eval(SymbolTable* symbolTable) {
   return &NONE;
 }
 
+FuncNode::FuncNode(Node* _node, TuplesLiteral* arguments) : Node(), node(_node), argumentsList(arguments) { 
+  if(SuiteNode* suite = dynamic_cast<SuiteNode*>(node))
+    id = suite -> getID(); 
+  if(ClosureNode* closure = dynamic_cast<ClosureNode*>(node))
+    id = closure -> getSuiteNode() -> getID();
+} 
 
 const Node* FuncNode::eval(SymbolTable* _symbolTable) {
 
@@ -79,7 +85,9 @@ const Node* FuncNode::eval(SymbolTable* _symbolTable) {
   symbolTable -> setParents(_symbolTable);
 
   // SETUP function body
-  Node* node = symbolTable -> getValue(id); 
+  if(!node) {
+    node = symbolTable -> getValue(id); 
+  }
   SuiteNode* suite = dynamic_cast<SuiteNode*>(node);
   ClosureNode* closure = dynamic_cast<ClosureNode*>(node); 
 
@@ -100,13 +108,13 @@ const Node* FuncNode::eval(SymbolTable* _symbolTable) {
       // return value should not be suitenode
       if(closure) {
         // TODO:
-        closure -> getSymbolTable() -> print();
-        std::cout << "new closure" << std::endl;
+        //closure -> getSymbolTable() -> print();
+        //std::cout << "new closure" << std::endl;
         TuplesLiteral* new_argumentsList = new TuplesLiteral(argumentsList -> getVec());
         PoolOfNodes::getInstance().add(new_argumentsList);
         new_argumentsList -> pop_front();
 
-        FuncNode* next_func = new FuncNode(closure -> getSuiteNode() ->getID(), new_argumentsList);
+        FuncNode* next_func = new FuncNode(closure, new_argumentsList);
         PoolOfNodes::getInstance().add(next_func);
         return next_func -> eval(closure -> getSymbolTable());
       }
@@ -123,7 +131,7 @@ const Node* FuncNode::eval(SymbolTable* _symbolTable) {
   }
   // IS closure
   else if(closure) {
-    std::cout << "in closure" << std::endl;
+    //std::cout << "in closure" << std::endl;
     TuplesLiteral* arguments = dynamic_cast<TuplesLiteral*>(argumentsList -> getFirst());
     // HAVE new arguments
     if(arguments) {
@@ -142,11 +150,11 @@ const Node* FuncNode::eval(SymbolTable* _symbolTable) {
       closure = dynamic_cast<ClosureNode*>(res); 
       // keep new closure
       if(closure) {
-        std::cout << "new closure" << std::endl;
+        //std::cout << "new closure" << std::endl;
         TuplesLiteral* new_argumentsList = new TuplesLiteral(argumentsList -> getVec());
         PoolOfNodes::getInstance().add(new_argumentsList);
         new_argumentsList -> pop_front();
-        FuncNode* next_func = new FuncNode(closure -> getSuiteNode() ->getID(), new_argumentsList);
+        FuncNode* next_func = new FuncNode(closure, new_argumentsList);
         PoolOfNodes::getInstance().add(next_func);
         return next_func -> eval(closure -> getSymbolTable());
       }
