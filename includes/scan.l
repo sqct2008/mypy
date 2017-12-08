@@ -289,6 +289,10 @@ comment   #.*
 "with"     { return WITH; }
 "yield"    { return YIELD; }
 
+"True"     { return TRUE; }
+"False"    { return FALSE; }
+"None"     { return NONE; }
+
 {floatnumber}    { ++numbers; yylval.floatnumber = atof(yytext); return FLOAT; }
 {decinteger}    { ++numbers; yylval.integer = atoi(yytext); return INT; }
 {number}   { ++numbers; return NUMBER; }

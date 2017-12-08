@@ -1,7 +1,12 @@
 #include "symbolTable.h"
 #include "ast.h"
 
-extern NoneTypeLiteral NONE;
+extern NoneTypeLiteral None;
+
+SymbolTable::SymbolTable(const SymbolTable& rhs) {
+  table = rhs.table;
+  parents = rhs.parents;
+}
 
 Node* SymbolTable::getValue(const std::string name) const {
   std::map<std::string, Node*>::const_iterator it = table.find(name);
@@ -16,7 +21,7 @@ Node* SymbolTable::getValue(const std::string name) const {
         return it->second;
     }
     std::cout << "no name in symbolTable" << std::endl;
-    return &NONE;
+    return &None;
   }
   else
     return it->second;

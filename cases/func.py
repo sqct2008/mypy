@@ -1,3 +1,8 @@
+def f(x,y):
+    print x,y
+    return f
+f(1,2)(3,4)
+
 def g():
     print 1
 g()
@@ -84,7 +89,32 @@ def f():
     g(x)
 f()
 
-def f(x):
+def f():
     print x
-    f(x+1)
-f(3)
+    return
+
+def g():
+    x=10
+    f()
+    return
+x=5
+g()
+
+def f():
+    global x
+    print x
+    return
+
+def g():
+    x=10
+    f()
+    return
+x=7
+g()
+
+def f():
+    global x
+    x+=1
+    print x
+    return
+

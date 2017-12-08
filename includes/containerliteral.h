@@ -2,7 +2,7 @@
 #include <list>
 #include "literal.h"
 
-extern NoneTypeLiteral NONE;
+extern NoneTypeLiteral None;
 
 class StrLiteral: public ContainerLiteral {
 public:
@@ -115,7 +115,7 @@ public:
     std::list<Node*>::iterator it = tuples.begin();
 
     if(it == tuples.end())
-      return &NONE;
+      return nullptr;
 
     Node* res = *it;
     tuples.erase(it);
@@ -125,8 +125,19 @@ public:
   Node* getFirst() {
     std::list<Node*>::iterator it = tuples.begin();
     if(it == tuples.end())
-      return &NONE;
+      return nullptr;
     return *it;
+  }
+
+  // ONLY USED in IFNode::eval()
+  Node* getSecond() {
+    std::list<Node*>::iterator it = tuples.begin();
+    std::advance(it, 1);
+    if(it != tuples.end()) {
+      return *it;
+    }
+    else 
+      return nullptr;
   }
 
 
@@ -258,15 +269,18 @@ public:
   }
 
   virtual const Node* eval(SymbolTable* _sTable) { 
+    // XXX: NEED to return real value within tuple!
     symbolTable = _sTable; 
     TuplesLiteral* res = new TuplesLiteral();
     PoolOfNodes::getInstance().add(res);
     res -> _type = this -> _type;
     std::list<Node*>::const_iterator it = tuples.begin();
-    //std::cout << "in tuple eval" << std::endl;
     while(it!=tuples.end()){
-      res -> add_back(const_cast<Node*>((*it)->eval(symbolTable)));
-      //std::cout << "1" << std::endl;
+      Node* v = const_cast<Node*>((*it)->eval(symbolTable));
+      if(v)
+        res -> add_back(v);
+      else
+        res -> add_back(&None);
       it++;
     }
     return res; 

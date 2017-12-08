@@ -36,6 +36,7 @@ class ReturnNode : public Node {
 public:
   ReturnNode(Node* _res) : Node(), res(_res) { } 
   virtual ~ReturnNode() {}
+  virtual TypeName getTypeName() const { return RETURNTYPE; }
   virtual const Node* eval(SymbolTable*);
 private:
   Node* res;
@@ -50,13 +51,42 @@ private:
   Node* printList;
 };
 
+class GlobalNode : public Node {
+public:
+  GlobalNode(TuplesLiteral* _varList) : Node(), globalVar(_varList) { } 
+  virtual ~GlobalNode() {}
+  virtual const Node* eval(SymbolTable*);
+private:
+  TuplesLiteral* globalVar;
+};
+
+
 class SuiteNode;
 
-class FuncNode : public Node {
+class FuncDef : public Node {
 public:
-  FuncNode(std::string _id, TuplesLiteral* arguments) : Node(), id(_id), argumentsList(arguments){ } 
-  FuncNode(Node* _node, TuplesLiteral* arguments); 
-  virtual ~FuncNode() { delete symbolTable; }
+  FuncDef(std::string , TuplesLiteral* , SuiteNode* );
+  virtual ~FuncDef() { }
+  std::string getID() { return id; }
+  TuplesLiteral* getParas() { return parametersList; }
+  SuiteNode* getSuite() { return suite; }
+  SymbolTable* getSymbolTable() { return initial_symbolTable; }
+  void setParents(SymbolTable*);
+  virtual TypeName getTypeName() const { return FUNCDEF; }
+  virtual const Node* eval(SymbolTable*) { return nullptr; }
+private:
+  std::string id;
+  TuplesLiteral* parametersList;
+  SymbolTable* initial_symbolTable = nullptr;
+  SuiteNode* suite;
+};
+
+class FuncCall : public Node {
+public:
+  FuncCall(std::string _id, TuplesLiteral* arguments) : Node(), id(_id), argumentsList(arguments){  } 
+  FuncCall(FuncDef* _funcDef, TuplesLiteral* _argumentsList) : node(_funcDef), argumentsList(_argumentsList) { if(!node) std::cout << "no funcdef" << std::endl; }
+  virtual ~FuncCall() { }
+  virtual TypeName getTypeName() const { return FUNCCALL; }
   virtual const Node* eval(SymbolTable*);
 private:
   std::string id;
@@ -67,15 +97,29 @@ private:
 
 class ClosureNode : public Node {
 public:
-  ClosureNode(SuiteNode* _suite, SymbolTable* _symbolTable) : suite(_suite), symbolTable(_symbolTable) { }
+  ClosureNode(FuncDef* _funcDef, SymbolTable* _symbolTable) : funcDef(_funcDef), symbolTable(_symbolTable) { }
   // They are all copy of other node's attribute, so no need to delete
-  virtual ~ClosureNode() {}
+  virtual ~ClosureNode() { ; }
   SymbolTable* getSymbolTable() { return symbolTable; }
-  SuiteNode* getSuiteNode() { return suite; }
+  FuncDef* getFuncDef() { return funcDef; }
+  virtual TypeName getTypeName() const { return CLOSURE; }
   virtual const Node* eval(SymbolTable*);
 private:
-  SuiteNode* suite;
+  FuncDef* funcDef;
   SymbolTable* symbolTable;
+};
+
+class IFNode : public Node {
+public:
+  IFNode(Node* _test, SuiteNode* _suite);
+  virtual ~IFNode() { }
+  void add_suite(TuplesLiteral* suite_trailer);
+  void add_line(SuiteNode* suite_trailer);
+  virtual TypeName getTypeName() const { return IFELSE; }
+  virtual const Node* eval(SymbolTable*);
+private:
+  Node* test;
+  TuplesLiteral* tuple_if_suite;
 };
 
 class SuiteNode : public Node {
@@ -84,16 +128,12 @@ public:
     PoolOfNodes::getInstance().add(suite);
   } 
   virtual ~SuiteNode() { }
-  void setID(std::string);
-  std::string getID() { return id; }
   void addLine(Node*);
-  void setParas(TuplesLiteral* );
-  Node* getParas();
+  TuplesLiteral* getSuite() { return suite; }
+  const std::list<Node*>& getLines() { return suite -> getVec(); }
   virtual const Node* eval(SymbolTable*);
 private:
-  std::string id;
   TuplesLiteral* suite;
-  TuplesLiteral* parametersList;
 };
 
 class BinaryNode : public Node {
@@ -112,6 +152,7 @@ protected:
 class AssBinaryNode : public BinaryNode {
 public:
   AssBinaryNode(Node* left, Node* right);
+  virtual TypeName getTypeName() const { return ASSIGN; }
   virtual const Node* eval(SymbolTable*);
 };
 
@@ -168,3 +209,41 @@ public:
   RightShiftNode(Node* left, Node* right) : BinaryNode(left,right) { }
   virtual const Node* eval(SymbolTable*);
 };
+
+class GreaterNode : public BinaryNode {
+public:
+  GreaterNode(Node* left, Node* right) : BinaryNode(left,right) { }
+  virtual const Node* eval(SymbolTable*);
+};
+
+class LessNode : public BinaryNode {
+public:
+  LessNode(Node* left, Node* right) : BinaryNode(left,right) { }
+  virtual const Node* eval(SymbolTable*);
+};
+
+class GreaterEQNode : public BinaryNode {
+public:
+  GreaterEQNode(Node* left, Node* right) : BinaryNode(left,right) { }
+  virtual const Node* eval(SymbolTable*);
+};
+
+class LessEQNode : public BinaryNode {
+public:
+  LessEQNode(Node* left, Node* right) : BinaryNode(left,right) { }
+  virtual const Node* eval(SymbolTable*);
+};
+
+class EQEqualNode : public BinaryNode {
+public:
+  EQEqualNode(Node* left, Node* right) : BinaryNode(left,right) { }
+  virtual const Node* eval(SymbolTable*);
+};
+
+class NotEQNode : public BinaryNode {
+public:
+  NotEQNode(Node* left, Node* right) : BinaryNode(left,right) { }
+  virtual const Node* eval(SymbolTable*);
+};
+
+

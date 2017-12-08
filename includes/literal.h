@@ -4,6 +4,7 @@
 #include "poolOfNodes.h"
 class ContainerLiteral; 
 class NoneTypeLiteral;
+class BoolLiteral;
 class Literal : public Node {
 public:
   virtual ~Literal() {}
@@ -50,6 +51,26 @@ public:
   virtual const Literal* doubleSlash(const NoneTypeLiteral*) const =0;
   virtual const Literal* doubleSlash(const ContainerLiteral*) const =0;
 
+  virtual const BoolLiteral* operator>(const Literal& rhs) const = 0;
+  virtual const BoolLiteral* opGreater(long double) const =0;
+  virtual const BoolLiteral* opGreater(int) const =0;
+  virtual const BoolLiteral* opGreater(const NoneTypeLiteral*) const =0;
+  virtual const BoolLiteral* opGreater(const ContainerLiteral*) const =0;
+
+  virtual const BoolLiteral* operator>=(const Literal& rhs) const = 0;
+  virtual const BoolLiteral* opGreaterEQ(long double) const =0;
+  virtual const BoolLiteral* opGreaterEQ(int) const =0;
+  virtual const BoolLiteral* opGreaterEQ(const NoneTypeLiteral*) const =0;
+  virtual const BoolLiteral* opGreaterEQ(const ContainerLiteral*) const =0;
+
+  virtual const BoolLiteral* operator==(const Literal& rhs) const = 0;
+  virtual const BoolLiteral* opEQEqual(long double) const =0;
+  virtual const BoolLiteral* opEQEqual(int) const =0;
+  virtual const BoolLiteral* opEQEqual(const NoneTypeLiteral*) const =0;
+  virtual const BoolLiteral* opEQEqual(const ContainerLiteral*) const =0;
+
+  virtual bool Bool() const = 0;
+  virtual TypeName getTypeName() const { return LITERAL; }
   virtual const Node* eval(SymbolTable*) = 0;
   virtual void print() const { 
     std::cout << "No Way" << std::endl; 
@@ -171,6 +192,34 @@ public:
     throw "cannot doubleSlash \'NoneType\' with \'Container\'!";
   }
 
+  virtual const BoolLiteral* operator>(const Literal& rhs) const {
+    return rhs.opGreater(this);
+  }
+  virtual const BoolLiteral* opGreater(long double ) const ;
+  virtual const BoolLiteral* opGreater(int ) const ;
+  virtual const BoolLiteral* opGreater(const NoneTypeLiteral*) const ;
+  virtual const BoolLiteral* opGreater(const ContainerLiteral*) const ;
+
+  virtual const BoolLiteral* operator>=(const Literal& rhs) const {
+    return rhs.opGreaterEQ(this);
+  }
+  virtual const BoolLiteral* opGreaterEQ(long double ) const ;
+  virtual const BoolLiteral* opGreaterEQ(int ) const ;
+  virtual const BoolLiteral* opGreaterEQ(const NoneTypeLiteral*) const ;
+  virtual const BoolLiteral* opGreaterEQ(const ContainerLiteral*) const ;
+
+  virtual const BoolLiteral* operator==(const Literal& rhs) const {
+    return rhs.opEQEqual(this);
+  }
+  virtual const BoolLiteral* opEQEqual(long double) const ;
+  virtual const BoolLiteral* opEQEqual(int) const ;
+  virtual const BoolLiteral* opEQEqual(const NoneTypeLiteral*) const ;
+  virtual const BoolLiteral* opEQEqual(const ContainerLiteral*) const ;
+
+  virtual bool Bool() const {
+    return false;
+  }
+  virtual TypeName getTypeName() const { return NONETYPE; }
   virtual const Node* eval(SymbolTable*) { return this; }
   virtual void print() const { 
     std::cout << "None"; 
@@ -275,6 +324,33 @@ public:
     throw "cannot doubleslash \'Container\' with \'container\'!";
   }
 
+  virtual const BoolLiteral* operator>(const Literal& rhs) const {
+    return rhs.opGreater(this);
+  }
+  virtual const BoolLiteral* opGreater(long double ) const ;
+  virtual const BoolLiteral* opGreater(int ) const ;
+  virtual const BoolLiteral* opGreater(const NoneTypeLiteral*) const ;
+  virtual const BoolLiteral* opGreater(const ContainerLiteral*) const ;
+
+  virtual const BoolLiteral* operator>=(const Literal& rhs) const {
+    return rhs.opGreaterEQ(this);
+  }
+  virtual const BoolLiteral* opGreaterEQ(long double ) const ;
+  virtual const BoolLiteral* opGreaterEQ(int ) const ;
+  virtual const BoolLiteral* opGreaterEQ(const NoneTypeLiteral*) const ;
+  virtual const BoolLiteral* opGreaterEQ(const ContainerLiteral*) const ;
+
+  virtual const BoolLiteral* operator==(const Literal& rhs) const {
+    return rhs.opEQEqual(this);
+  }
+  virtual const BoolLiteral* opEQEqual(long double) const ;
+  virtual const BoolLiteral* opEQEqual(int) const ;
+  virtual const BoolLiteral* opEQEqual(const NoneTypeLiteral*) const ;
+  virtual const BoolLiteral* opEQEqual(const ContainerLiteral*) const ;
+
+  virtual bool Bool() const {
+    return true;
+  }
   virtual const Node* eval(SymbolTable*) = 0; 
   virtual void print() const { 
     std::cout << "No way!" << std::endl;
@@ -429,6 +505,33 @@ public:
     throw "cannot doubleslash \'Container\' with \'float\'!";
   }
 
+  virtual const BoolLiteral* operator>(const Literal& rhs) const {
+    return rhs.opGreater(val);
+  }
+  virtual const BoolLiteral* opGreater(long double ) const ;
+  virtual const BoolLiteral* opGreater(int ) const ;
+  virtual const BoolLiteral* opGreater(const NoneTypeLiteral*) const ;
+  virtual const BoolLiteral* opGreater(const ContainerLiteral*) const ;
+
+  virtual const BoolLiteral* operator>=(const Literal& rhs) const {
+    return rhs.opGreaterEQ(val);
+  }
+  virtual const BoolLiteral* opGreaterEQ(long double ) const ;
+  virtual const BoolLiteral* opGreaterEQ(int ) const ;
+  virtual const BoolLiteral* opGreaterEQ(const NoneTypeLiteral*) const ;
+  virtual const BoolLiteral* opGreaterEQ(const ContainerLiteral*) const ;
+
+  virtual const BoolLiteral* operator==(const Literal& rhs) const {
+    return rhs.opEQEqual(val);
+  }
+  virtual const BoolLiteral* opEQEqual(long double) const ;
+  virtual const BoolLiteral* opEQEqual(int) const ;
+  virtual const BoolLiteral* opEQEqual(const NoneTypeLiteral*) const ;
+  virtual const BoolLiteral* opEQEqual(const ContainerLiteral*) const ;
+
+  virtual bool Bool() const {
+    return val ? true : false;
+  }
   virtual const Node* eval(SymbolTable*) { return this; }
   virtual void print() const { 
     //std::cout << "FLOAT:" << val ; 
@@ -586,12 +689,58 @@ public:
     throw "cannot doubleslash \'int\' with \'Container\'!";
   }
 
+  virtual const BoolLiteral* operator>(const Literal& rhs) const {
+    return rhs.opGreater(val);
+  }
+  virtual const BoolLiteral* opGreater(long double ) const ;
+  virtual const BoolLiteral* opGreater(int ) const ;
+  virtual const BoolLiteral* opGreater(const NoneTypeLiteral*) const ;
+  virtual const BoolLiteral* opGreater(const ContainerLiteral*) const ;
+
+  virtual const BoolLiteral* operator>=(const Literal& rhs) const {
+    return rhs.opGreaterEQ(val);
+  }
+  virtual const BoolLiteral* opGreaterEQ(long double ) const ;
+  virtual const BoolLiteral* opGreaterEQ(int ) const ;
+  virtual const BoolLiteral* opGreaterEQ(const NoneTypeLiteral*) const ;
+  virtual const BoolLiteral* opGreaterEQ(const ContainerLiteral*) const ;
+
+  virtual const BoolLiteral* operator==(const Literal& rhs) const {
+    return rhs.opEQEqual(val);
+  }
+  virtual const BoolLiteral* opEQEqual(long double) const ;
+  virtual const BoolLiteral* opEQEqual(int) const ;
+  virtual const BoolLiteral* opEQEqual(const NoneTypeLiteral*) const ;
+  virtual const BoolLiteral* opEQEqual(const ContainerLiteral*) const ;
+
+  virtual bool Bool() const {
+    return val ? true : false;
+  }
   virtual const Node* eval(SymbolTable*) { return this; }
   virtual void print() const { 
     //std::cout << "INT:" << val ; 
     std::cout << val ; 
   }
-private:
+protected:
   int val;
+};
+
+class BoolLiteral : public IntLiteral {
+public:
+  BoolLiteral(bool _val) : IntLiteral(_val) {  }
+  //virtual bool Bool() const;
+  virtual const Node* eval(SymbolTable*) { return this; }
+  void setOpposite() { val = val ? false : true; }
+  virtual void print() const {
+    if(val == 0) {
+      std::cout << "False";
+    }
+    else if(val == 1) {
+      std::cout << "True";
+    }
+    else {
+      std::cout << "wrong way to print bool" << val << std::endl;
+    }
+  }
 };
 

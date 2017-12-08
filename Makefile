@@ -4,7 +4,7 @@ YACC = bison
 CFLAGS = -g -std=c++11 -W -Wall -Weffc++ -Wextra -pedantic -O0
 LEXFLAGS = -Wno-unused -Wno-sign-compare -Wno-deprecated-register
 
-OBJS = ast.o poolOfNodes.o symbolTable.o parse.tab.o lex.yy.o main.o
+OBJS = literal.o ast.o poolOfNodes.o symbolTable.o parse.tab.o lex.yy.o main.o
 
 run: $(OBJS)
 	$(CCC) $(CFLAGS) -o run $(OBJS)
@@ -20,6 +20,9 @@ lex.yy.c: includes/scan.l parse.tab.o
 
 lex.yy.o: lex.yy.c
 	$(CCC) $(CFLAGS) $(LEXFLAGS) -c lex.yy.c
+
+literal.o: includes/literal.h includes/literal.cpp
+	$(CCC) $(CFLAGS) -c includes/literal.cpp
 
 ast.o: includes/ast.cpp includes/ast.h includes/literal.h
 	$(CCC) $(CFLAGS) -c includes/ast.cpp

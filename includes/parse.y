@@ -8,7 +8,7 @@
   unsigned depthOfClass = 0;
   PoolOfNodes& pool = PoolOfNodes::getInstance();
   SymbolTable sTable;
-  extern NoneTypeLiteral NONE;
+  extern NoneTypeLiteral None;
 %}
 
 
@@ -21,16 +21,16 @@
 %token LESSEQUAL LPAR LSQB MINEQUAL MINUS NAME NEWLINE NOT NOTEQUAL INT FLOAT 
 %token OR PASS PERCENT PERCENTEQUAL PLUS PLUSEQUAL PRINT RAISE RBRACE RETURN
 %token RIGHTSHIFT RIGHTSHIFTEQUAL RPAR RSQB SEMI SLASH SLASHEQUAL STAR STAREQUAL
-%token STRING TILDE TRY VBAREQUAL WHILE WITH YIELD NUMBER 
+%token STRING TILDE TRY VBAREQUAL WHILE WITH YIELD NUMBER TRUE FALSE NONE
 
 %start start
 
 %type<node> atom plus_STRING power factor term arith_expr shift_expr opt_yield_test pick_yield_expr_testlist_comp testlist_comp pick_yield_expr_testlist testlist star_EQUAL expr_stmt test 
 %type<node> or_test and_test not_test comparison expr xor_expr and_expr testlist1 listmaker opt_listmaker dictorsetmaker opt_dictorsetmaker pick_for_test argument pick_argument
-%type<node> trailer small_stmt simple_stmt stmt compound_stmt 
+%type<node> trailer small_stmt simple_stmt stmt compound_stmt if_stmt global_stmt
 %type<node> fpdef opt_test print_stmt funcdef pick_NEWLINE_stmt flow_stmt return_stmt
-%type<tuple> parameters varargslist star_fpdef_COMMA star_fpdef_notest fplist star_trailer star_COMMA_test star_SEMI_small_stmt arglist star_argument_COMMA opt_arglist 
-%type<suite> suite plus_stmt star_NEWLINE_stmt 
+%type<tuple> parameters varargslist star_fpdef_COMMA star_fpdef_notest fplist star_trailer star_COMMA_test star_SEMI_small_stmt arglist star_argument_COMMA opt_arglist star_ELIF star_COMMA_NAME
+%type<suite> suite plus_stmt star_NEWLINE_stmt opt_ELSE
 %type<id> NAME STRING
 %type<integer> INT 
 %type<floatnumber> FLOAT
@@ -53,9 +53,7 @@ start
 	;
 file_input // Used in: start
 	: star_NEWLINE_stmt ENDMARKER
-    { if($1) $1 -> eval(&sTable); 
-      //sTable.print();
-    }
+    { if($1) $1 -> eval(&sTable); }
 	;
 pick_NEWLINE_stmt // Used in: star_NEWLINE_stmt
 	: NEWLINE
@@ -102,15 +100,11 @@ decorated // Used in: compound_stmt
 	| decorators funcdef
 	;
 funcdef // Used in: decorated, compound_stmt
-	: DEF NAME { ++depthOfFunc; } parameters COLON suite
+	: DEF NAME parameters COLON suite
     {
-      $6 -> setParas($4);
-      IdentNode* id = new IdentNode($2);
-      pool.add(id);
-      $6 -> setID($2);
+      $$ = new FuncDef($2, $3, $5) ;
+      pool.add($$);
       delete [] $2;
-      $$ = $6 ;
-      --depthOfFunc;
     }
 	;
 parameters // Used in: funcdef
@@ -269,6 +263,7 @@ small_stmt // Used in: simple_stmt, star_SEMI_small_stmt
 	| import_stmt
     { $$ = nullptr; }
 	| global_stmt
+    { $$ = $1; }
 	| exec_stmt
     { $$ = nullptr; }
 	| assert_stmt
@@ -401,8 +396,6 @@ augassign // Used in: expr_stmt
 print_stmt // Used in: small_stmt
 	: PRINT opt_test
     { 
-      //$2->eval(&sTable)->print();
-      //std::cout << 's' << std::endl;
       $$ = new PrintNode($2);
       pool.add($$);
     }
@@ -459,11 +452,15 @@ pass_stmt // Used in: small_stmt
 	;
 flow_stmt // Used in: small_stmt
 	: break_stmt
+    { $$ = nullptr; }
 	| continue_stmt
+    { $$ = nullptr; }
 	| return_stmt
     { $$ = $1; }
 	| raise_stmt
+    { $$ = nullptr; }
 	| yield_stmt
+    { $$ = nullptr; }
 	;
 break_stmt // Used in: flow_stmt
 	: BREAK
@@ -479,7 +476,7 @@ return_stmt // Used in: flow_stmt
     }
 	| RETURN
     {
-      $$ = new ReturnNode(&NONE);
+      $$ = new ReturnNode(&None);
       pool.add($$);
     }
 	;
@@ -543,10 +540,40 @@ dotted_name // Used in: decorator, pick_dotted_name, dotted_as_name, dotted_name
 	;
 global_stmt // Used in: small_stmt
 	: GLOBAL NAME star_COMMA_NAME
+    {
+      IdentNode* id = new IdentNode($2);
+      pool.add(id);
+      delete [] $2;
+      if($3) {
+        $3 -> add_front(id);
+        $$ = new GlobalNode($3);
+        pool.add($$);
+      }
+      else {
+        TuplesLiteral* nameList = new TuplesLiteral(id);
+        pool.add(nameList);
+        $$ = new GlobalNode(nameList);
+        pool.add($$);
+      }
+    }
 	;
 star_COMMA_NAME // Used in: global_stmt, star_COMMA_NAME
 	: star_COMMA_NAME COMMA NAME
+    {
+      IdentNode* id = new IdentNode($3);
+      delete [] $3;
+      pool.add(id);
+      if($1) {
+        $1 -> add_back(id);
+        $$ = $1;
+      }
+      else {
+        $$ = new TuplesLiteral(id);
+        pool.add($$);
+      }
+    }
 	| %empty
+    { $$ = nullptr; }
 	;
 exec_stmt // Used in: small_stmt
 	: EXEC expr IN test opt_COMMA_test
@@ -558,24 +585,55 @@ assert_stmt // Used in: small_stmt
 	;
 compound_stmt // Used in: stmt
 	: if_stmt
+    { $$ = $1; }
 	| while_stmt
+    { $$ = nullptr; }
 	| for_stmt
+    { $$ = nullptr; }
 	| try_stmt
+    { $$ = nullptr; }
 	| with_stmt
+    { $$ = nullptr; }
 	| funcdef
     { $$ = $1; }
 	| classdef
+    { $$ = nullptr; }
 	| decorated
+    { $$ = nullptr; }
 	;
 if_stmt // Used in: compound_stmt
-	: IF test COLON { ++depthOfFunc; }suite star_ELIF opt_ELSE
+	: IF test COLON suite star_ELIF opt_ELSE
     {
-      --depthOfFunc;
+      IFNode* ifNode = new IFNode($2, $4);
+      pool.add(ifNode);
+      if($5) {
+        if($6) {
+          $5 -> add_back($6);
+        }
+        ifNode -> add_suite($5);
+      }
+      else if($6) {
+        ifNode -> add_line($6);
+      }
+      $$ = ifNode;
     }
 	;
 star_ELIF // Used in: if_stmt, star_ELIF
 	: star_ELIF ELIF test COLON suite
+    { 
+      IFNode* ifNode = new IFNode($3, $5);
+      pool.add(ifNode);
+      if($1) {
+        $1 -> add_back(ifNode);
+        $$ = $1;
+      } 
+      else {
+        $$ = new TuplesLiteral(ifNode);
+        pool.add($$);
+      }
+    }
 	| %empty
+    { $$ = nullptr; }
 	;
 while_stmt // Used in: compound_stmt
 	: WHILE test COLON { ++depthOfFunc; } suite opt_ELSE
@@ -603,9 +661,11 @@ plus_except // Used in: except_Finally, plus_except
 	: plus_except except_clause COLON suite
 	| except_clause COLON suite
 	;
-opt_ELSE // Used in: except_Finally
+opt_ELSE // Used in: while_stmt for_stmt except_Finally
 	: ELSE COLON suite
+    { $$ = $3; }
 	| %empty
+    { $$ = nullptr; }
 	;
 opt_FINALLY // Used in: except_Finally
 	: FINALLY COLON suite
@@ -680,6 +740,7 @@ test // Used in: opt_EQUAL_test, print_stmt, star_COMMA_test, opt_test, plus_COM
 	;
 opt_IF_ELSE // Used in: test
 	: IF or_test ELSE test
+    { std::cout << "bug here" << std::endl; }
 	| %empty
 	;
 or_test // Used in: old_test, test, opt_IF_ELSE, or_test, comp_for
@@ -704,6 +765,32 @@ comparison // Used in: not_test, comparison
 	: expr
     { $$ = $1; }
 	| comparison comp_op expr
+    {
+      switch($2) {
+        case LESS:
+          $$ = new LessNode($1, $3);
+          break;
+        case GREATER:
+          $$ = new GreaterNode($1, $3);
+          break;
+        case GREATEREQUAL:
+          $$ = new GreaterEQNode($1, $3);
+          break;
+        case LESSEQUAL:
+          $$ = new LessEQNode($1, $3);
+          break;
+        case EQEQUAL:
+          $$ = new EQEqualNode($1, $3);
+          break;
+        case NOTEQUAL:
+          $$ = new NotEQNode($1, $3);
+          break;
+        default:
+          throw "wrong way with compair";
+          break;
+      }
+      pool.add($$);
+    }
 	;
 comp_op // Used in: comparison
 	: LESS
@@ -869,7 +956,7 @@ power // Used in: factor
       if($2) {
         IdentNode* id = dynamic_cast<IdentNode*>($1);
         if(id) {
-          FuncNode* func = new FuncNode(id -> getIdent(), $2); 
+          FuncCall* func = new FuncCall(id -> getIdent(), $2); 
           pool.add(func);
           $$ = new PowBinaryNode(func, $4); 
           pool.add($$);
@@ -887,7 +974,7 @@ power // Used in: factor
       if($2) {
         IdentNode* id = dynamic_cast<IdentNode*>($1);
         if(id) {
-          $$ = new FuncNode(id -> getIdent(), $2); 
+          $$ = new FuncCall(id -> getIdent(), $2); 
           pool.add($$);
         }
         else
@@ -902,7 +989,6 @@ star_trailer // Used in: power, star_trailer
     {
       if($1) {
         if($1->getType() == tuple) {
-          //std::cout << "right way" << std::endl;
           $1 -> add_back($2);
           $$ = $1;
         }
@@ -987,6 +1073,14 @@ atom // Used in: power
     { $$ = new IntLiteral($1); pool.add($$);       }
   | FLOAT
     { $$ = new FloatLiteral($1); pool.add($$);     }
+  | NUMBER
+    { $$ = nullptr; }
+  | TRUE
+    { $$ = new BoolLiteral(true); pool.add($$);    }
+  | FALSE
+    { $$ = new BoolLiteral(false); pool.add($$);    }
+  | NONE
+    { $$ = &None; }
 	| plus_STRING
     { $$ = $1; }
 	;
@@ -1060,7 +1154,7 @@ lambdef // Used in: test
 	;
 trailer // Used in: star_trailer
 	: LPAR opt_arglist RPAR
-    { // FIXME: type 
+    {
       if($2) {
         $2 -> setType(list); 
         $$ = $2; 
